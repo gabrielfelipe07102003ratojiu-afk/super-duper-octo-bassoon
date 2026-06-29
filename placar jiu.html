@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placar Jiu-Jitsu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --black:  #080A0F;
+    --panel:  #0D1117;
+    --border: #1C2333;
+    --amber:  #E8A020;
+    --amber-dim: #7A4F08;
+    --green:  #2ECC71;
+    --green-dim: #0F4A2A;
+    --red:    #D94F3D;
+    --red-dim: #5A1A10;
+    --cyan:   #1DCDCD;
+    --cyan-dim: #0A4A4A;
+    --muted:  #5A6478;
+    --white:  #E8EDF3;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--white); font-family:'Space Grotesk',sans-serif; min-height:100vh; padding-bottom:80px; }
+
+  /* HEADER */
+  .header { padding:24px 20px 16px; border-bottom:1px solid var(--border); }
+  .eyebrow { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--amber); text-transform:uppercase; margin-bottom:6px; }
+  .title { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+  .title span { color:var(--amber); }
+  .header-meta { display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:8px; flex-wrap:wrap; }
+  .date-display { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
+  .date-display span { color:var(--white); }
+
+  /* TABS */
+  .tabs { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .tab { padding:10px 18px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-right:1px solid var(--border); white-space:nowrap; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
+  .tab:hover { color:var(--white); }
+  .tab.active { color:var(--amber); border-bottom-color:var(--amber); background:#130B02; }
+
+  /* PANELS */
+  .panel { display:none; padding:16px 20px; }
+  .panel.active { display:block; }
+
+  /* PRESENÇA */
+  .section-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:10px; }
+
+  .treino-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; }
+  .treino-date-input { background:var(--panel); border:1px solid var(--border); border-radius:4px; color:var(--white); font-family:'Space Mono',monospace; font-size:12px; padding:8px 12px; outline:none; }
+  .treino-date-input:focus { border-color:var(--amber); }
+  .btn { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:8px 14px; border-radius:4px; border:none; cursor:pointer; transition:all .15s; }
+  .btn-amber { background:var(--amber); color:var(--black); font-weight:700; }
+  .btn-amber:hover { opacity:.85; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
+  .btn-ghost:hover { border-color:var(--amber); color:var(--amber); }
+  .btn-green { background:var(--green); color:var(--black); font-weight:700; }
+  .btn-green:hover { opacity:.85; }
+  .btn-red { background:transparent; border:1px solid var(--red-dim); color:var(--red); font-size:9px; padding:4px 8px; }
+  .btn-red:hover { background:var(--red-dim); }
+
+  /* ALUNOS LIST */
+  .alunos-list { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+  .aluno-row { display:flex; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:10px 14px; transition:border-color .15s; }
+  .aluno-row.presente { border-color:var(--green-dim); background:#061A0F; }
+  .aluno-check { width:22px; height:22px; border-radius:3px; border:2px solid var(--border); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .15s; font-size:13px; }
+  .aluno-row.presente .aluno-check { background:var(--green); border-color:var(--green); }
+  .aluno-nome { flex:1; font-size:14px; font-weight:500; }
+  .aluno-row.presente .aluno-nome { color:var(--green); }
+  .aluno-streak { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); white-space:nowrap; }
+  .aluno-row.presente .aluno-streak { color:var(--green); }
+
+  /* ADD ALUNO */
+  .add-aluno { display:flex; gap:8px; margin-bottom:20px; }
+  .input-text { flex:1; background:var(--panel); border:1px solid var(--border); border-radius:4px; color:var(--white); font-family:'Space Grotesk',sans-serif; font-size:14px; padding:9px 12px; outline:none; }
+  .input-text:focus { border-color:var(--amber); }
+  .input-text::placeholder { color:var(--muted); }
+
+  /* PRESENÇA SUMMARY */
+  .presenca-summary { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .summary-pill { font-family:'Space Mono',monospace; font-size:11px; padding:6px 12px; border-radius:3px; }
+  .pill-green { background:#061A0F; color:var(--green); border:1px solid var(--green-dim); }
+  .pill-muted { background:var(--panel); color:var(--muted); border:1px solid var(--border); }
+
+  /* HISTÓRICO */
+  .historico-list { display:flex; flex-direction:column; gap:8px; }
+  .hist-item { background:var(--panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .hist-head { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .hist-date { font-family:'Space Mono',monospace; font-size:11px; color:var(--amber); }
+  .hist-count { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); }
+  .hist-nomes { padding:10px 14px; display:flex; flex-wrap:wrap; gap:6px; }
+  .hist-tag { font-family:'Space Mono',monospace; font-size:10px; padding:3px 8px; background:#061A0F; color:var(--green); border:1px solid var(--green-dim); border-radius:2px; }
+  .hist-item.collapsed .hist-nomes { display:none; }
+
+  /* RANKING */
+  .ranking-list { display:flex; flex-direction:column; gap:6px; }
+  .rank-row { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:12px 14px; }
+  .rank-pos { font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:var(--muted); min-width:28px; }
+  .rank-pos.gold { color:#FFD700; }
+  .rank-pos.silver { color:#C0C0C0; }
+  .rank-pos.bronze { color:#CD7F32; }
+  .rank-nome { flex:1; font-size:14px; font-weight:500; }
+  .rank-bar-wrap { width:100px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .rank-bar { height:100%; background:var(--amber); border-radius:3px; transition:width .4s ease; }
+  .rank-num { font-family:'Space Mono',monospace; font-size:12px; color:var(--amber); min-width:32px; text-align:right; }
+
+  /* EXPORT */
+  .export-box { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:14px; margin-top:16px; }
+  .export-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+  .export-text { font-family:'Space Mono',monospace; font-size:12px; color:var(--white); line-height:1.7; white-space:pre-wrap; background:#111820; padding:12px; border-radius:3px; border:1px solid var(--border); }
+  .export-actions { display:flex; gap:8px; margin-top:10px; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:20px; width:100%; max-width:360px; }
+  .modal-title { font-family:'Space Mono',monospace; font-size:11px; color:var(--amber); letter-spacing:.1em; text-transform:uppercase; margin-bottom:14px; }
+  .modal-actions { display:flex; gap:8px; margin-top:16px; }
+
+  .empty-state { text-align:center; padding:32px 16px; color:var(--muted); font-family:'Space Mono',monospace; font-size:11px; line-height:1.8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">Academia · Rio Verde — GO</div>
+  <div class="title">PLACAR <span>JIU-JITSU</span></div>
+  <div class="header-meta">
+    <div class="date-display">Hoje: <span id="hoje-display"></span></div>
+    <button class="btn btn-amber" onclick="abrirNovoTreino()">+ Registrar Treino</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('presenca')">Presença</div>
+  <div class="tab" onclick="showTab('historico')">Histórico</div>
+  <div class="tab" onclick="showTab('ranking')">Ranking</div>
+  <div class="tab" onclick="showTab('alunos')">Alunos</div>
+</div>
+
+<!-- PRESENÇA -->
+<div class="panel active" id="panel-presenca">
+  <div id="sem-treino-hoje" style="display:block">
+    <div class="empty-state">
+      Nenhum treino registrado hoje.<br>Toca em <strong style="color:var(--amber)">+ Registrar Treino</strong> pra começar.
+    </div>
+  </div>
+  <div id="treino-hoje" style="display:none">
+    <div style="margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div class="section-label">Treino de hoje</div>
+        <div id="treino-hoje-data" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--amber);"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="gerarExport()">Grupo</button>
+      <button class="btn btn-amber" onclick="gerarRelatorioJiu()">📋 Claude</button>
+    </div>
+    <div id="presenca-summary" class="presenca-summary"></div>
+    <div class="alunos-list" id="lista-presenca"></div>
+    <div id="export-area" style="display:none">
+      <div class="export-box">
+        <div class="export-label">Mensagem para o grupo</div>
+        <div class="export-text" id="export-text"></div>
+        <div class="export-actions">
+          <button class="btn btn-amber" onclick="copiarExport()">Copiar</button>
+          <button class="btn btn-ghost" onclick="fecharExport()">Fechar</button>
+        </div>
+      </div>
+    </div>
+    <div id="relatorio-jiu-area" style="display:none;margin-top:12px;">
+      <div class="export-box">
+        <div class="export-label">Cola isso no chat do Claude</div>
+        <div class="export-text" id="relatorio-jiu-text"></div>
+        <div class="export-actions">
+          <button class="btn btn-amber" onclick="copiarRelatorioJiu()">Copiar</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('relatorio-jiu-area').style.display='none'">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="panel" id="panel-historico">
+  <div class="section-label" style="margin-bottom:12px;">Todos os treinos</div>
+  <div class="historico-list" id="historico-list">
+    <div class="empty-state">Nenhum treino registrado ainda.</div>
+  </div>
+</div>
+
+<!-- RANKING -->
+<div class="panel" id="panel-ranking">
+  <div class="section-label" style="margin-bottom:12px;">Presença acumulada</div>
+  <div class="ranking-list" id="ranking-list">
+    <div class="empty-state">Nenhum dado ainda.</div>
+  </div>
+</div>
+
+<!-- ALUNOS -->
+<div class="panel" id="panel-alunos">
+  <div class="section-label" style="margin-bottom:10px;">Gerenciar alunos</div>
+  <div class="add-aluno">
+    <input class="input-text" id="novo-aluno-input" placeholder="Nome do aluno..." onkeydown="if(event.key==='Enter')adicionarAluno()">
+    <button class="btn btn-amber" onclick="adicionarAluno()">Adicionar</button>
+  </div>
+  <div class="alunos-list" id="lista-alunos-gerenciar"></div>
+</div>
+
+<!-- MODAL NOVO TREINO -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Registrar novo treino</div>
+    <div style="margin-bottom:12px;">
+      <div class="section-label" style="margin-bottom:6px;">Data do treino</div>
+      <input type="date" class="treino-date-input" id="modal-data" style="width:100%">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-amber" onclick="confirmarNovoTreino()" style="flex:1">Abrir treino</button>
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let state = {
+  alunos: [],
+  treinos: [], // [{data, presentes:[]}]
+  treinoAtivo: null // data string YYYY-MM-DD
+};
+
+function salvar() {
+  try { localStorage.setItem('jiu_placar', JSON.stringify(state)); } catch(e) {}
+}
+function carregar() {
+  try {
+    const d = localStorage.getItem('jiu_placar');
+    if (d) state = JSON.parse(d);
+  } catch(e) {}
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init() {
+  carregar();
+  const hoje = hojeStr();
+  document.getElementById('hoje-display').textContent = formatarData(hoje);
+  document.getElementById('modal-data').value = hoje;
+  // verificar se há treino hoje
+  const treinoHoje = state.treinos.find(t => t.data === hoje);
+  if (treinoHoje) {
+    state.treinoAtivo = hoje;
+    renderPresenca();
+  }
+  renderHistorico();
+  renderRanking();
+  renderAlunosGerenciar();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function hojeStr() {
+  return new Date().toISOString().slice(0,10);
+}
+function formatarData(str) {
+  const [y,m,d] = str.split('-');
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const dt = new Date(y, m-1, d);
+  return `${dias[dt.getDay()]} ${d}/${meses[m-1]}/${y}`;
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const map = {presenca:0,historico:1,ranking:2,alunos:3};
+  tabs[map[tab]].classList.add('active');
+}
+
+// ── NOVO TREINO MODAL ──────────────────────────────────────────
+function abrirNovoTreino() {
+  document.getElementById('modal-data').value = hojeStr();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function confirmarNovoTreino() {
+  const data = document.getElementById('modal-data').value;
+  if (!data) return;
+  // verificar se já existe
+  if (!state.treinos.find(t => t.data === data)) {
+    state.treinos.push({ data, presentes: [] });
+    state.treinos.sort((a,b) => b.data.localeCompare(a.data));
+    salvar();
+  }
+  state.treinoAtivo = data;
+  fecharModal();
+  renderPresenca();
+  renderHistorico();
+  renderRanking();
+  showTab('presenca');
+}
+
+// ── PRESENÇA ──────────────────────────────────────────────────
+function renderPresenca() {
+  const treino = state.treinos.find(t => t.data === state.treinoAtivo);
+  if (!treino) {
+    document.getElementById('sem-treino-hoje').style.display = 'block';
+    document.getElementById('treino-hoje').style.display = 'none';
+    return;
+  }
+  document.getElementById('sem-treino-hoje').style.display = 'none';
+  document.getElementById('treino-hoje').style.display = 'block';
+  document.getElementById('treino-hoje-data').textContent = formatarData(treino.data);
+  document.getElementById('export-area').style.display = 'none';
+
+  // summary
+  const total = state.alunos.length;
+  const presentes = treino.presentes.length;
+  document.getElementById('presenca-summary').innerHTML =
+    `<span class="summary-pill pill-green">${presentes} presente${presentes!==1?'s':''}</span>` +
+    `<span class="summary-pill pill-muted">${total - presentes} ausente${(total-presentes)!==1?'s':''}</span>`;
+
+  // lista
+  const lista = document.getElementById('lista-presenca');
+  lista.innerHTML = '';
+  if (state.alunos.length === 0) {
+    lista.innerHTML = '<div class="empty-state">Nenhum aluno cadastrado.<br>Vai na aba <strong style="color:var(--amber)">Alunos</strong> e adiciona.</div>';
+    return;
+  }
+
+  // ordenar: presentes primeiro
+  const sorted = [...state.alunos].sort((a,b) => {
+    const ap = treino.presentes.includes(a) ? 1 : 0;
+    const bp = treino.presentes.includes(b) ? 1 : 0;
+    return bp - ap;
+  });
+
+  sorted.forEach(nome => {
+    const presente = treino.presentes.includes(nome);
+    const streak = calcStreak(nome);
+    const row = document.createElement('div');
+    row.className = 'aluno-row' + (presente ? ' presente' : '');
+    row.innerHTML = `
+      <div class="aluno-check">${presente ? '✓' : ''}</div>
+      <div class="aluno-nome">${nome}</div>
+      <div class="aluno-streak">${streak > 0 ? streak + ' treino' + (streak!==1?'s':'') : '—'}</div>
+    `;
+    row.querySelector('.aluno-check').addEventListener('click', () => togglePresenca(nome));
+    row.addEventListener('click', (e) => { if (!e.target.classList.contains('aluno-check')) togglePresenca(nome); });
+    lista.appendChild(row);
+  });
+}
+
+function togglePresenca(nome) {
+  const treino = state.treinos.find(t => t.data === state.treinoAtivo);
+  if (!treino) return;
+  const idx = treino.presentes.indexOf(nome);
+  if (idx >= 0) treino.presentes.splice(idx, 1);
+  else treino.presentes.push(nome);
+  salvar();
+  renderPresenca();
+  renderHistorico();
+  renderRanking();
+}
+
+function calcStreak(nome) {
+  return state.treinos.filter(t => t.presentes.includes(nome)).length;
+}
+
+// ── HISTÓRICO ──────────────────────────────────────────────────
+function renderHistorico() {
+  const el = document.getElementById('historico-list');
+  if (state.treinos.length === 0) {
+    el.innerHTML = '<div class="empty-state">Nenhum treino registrado ainda.</div>';
+    return;
+  }
+  el.innerHTML = state.treinos.map((t, i) => `
+    <div class="hist-item ${i > 0 ? 'collapsed' : ''}">
+      <div class="hist-head" onclick="this.parentElement.classList.toggle('collapsed')">
+        <div class="hist-date">${formatarData(t.data)}</div>
+        <div class="hist-count">${t.presentes.length} presente${t.presentes.length!==1?'s':''} ▾</div>
+      </div>
+      <div class="hist-nomes">
+        ${t.presentes.length === 0
+          ? '<span style="font-family:Space Mono,monospace;font-size:11px;color:var(--muted)">Nenhum presente registrado</span>'
+          : t.presentes.map(n => `<span class="hist-tag">${n}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── RANKING ──────────────────────────────────────────────────
+function renderRanking() {
+  const el = document.getElementById('ranking-list');
+  if (state.alunos.length === 0) {
+    el.innerHTML = '<div class="empty-state">Nenhum aluno cadastrado ainda.</div>';
+    return;
+  }
+  const contagem = state.alunos.map(nome => ({
+    nome,
+    total: state.treinos.filter(t => t.presentes.includes(nome)).length
+  })).sort((a,b) => b.total - a.total);
+
+  const max = contagem[0]?.total || 1;
+  const medalhas = ['🥇','🥈','🥉'];
+  const classes = ['gold','silver','bronze'];
+
+  el.innerHTML = contagem.map((a, i) => `
+    <div class="rank-row">
+      <div class="rank-pos ${classes[i]||''}">${medalhas[i] || (i+1)}</div>
+      <div class="rank-nome">${a.nome}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${max>0?(a.total/max*100):0}%"></div></div>
+      <div class="rank-num">${a.total}</div>
+    </div>
+  `).join('');
+}
+
+// ── GERENCIAR ALUNOS ──────────────────────────────────────────
+function adicionarAluno() {
+  const input = document.getElementById('novo-aluno-input');
+  const nome = input.value.trim();
+  if (!nome || state.alunos.includes(nome)) return;
+  state.alunos.push(nome);
+  state.alunos.sort();
+  salvar();
+  input.value = '';
+  renderAlunosGerenciar();
+  renderPresenca();
+  renderRanking();
+}
+
+function removerAluno(nome) {
+  if (!confirm(`Remover "${nome}"? O histórico de presença será mantido.`)) return;
+  state.alunos = state.alunos.filter(a => a !== nome);
+  salvar();
+  renderAlunosGerenciar();
+  renderPresenca();
+  renderRanking();
+}
+
+function renderAlunosGerenciar() {
+  const el = document.getElementById('lista-alunos-gerenciar');
+  if (state.alunos.length === 0) {
+    el.innerHTML = '<div class="empty-state">Nenhum aluno ainda.</div>';
+    return;
+  }
+  el.innerHTML = state.alunos.map(nome => `
+    <div class="aluno-row">
+      <div class="aluno-nome">${nome}</div>
+      <div class="aluno-streak">${calcStreak(nome)} treino${calcStreak(nome)!==1?'s':''}</div>
+      <button class="btn btn-red" onclick="removerAluno('${nome.replace(/'/g,"\\'")}')">Remover</button>
+    </div>
+  `).join('');
+}
+
+// ── EXPORT ──────────────────────────────────────────────────
+function gerarExport() {
+  const treino = state.treinos.find(t => t.data === state.treinoAtivo);
+  if (!treino) return;
+
+  const contagem = state.alunos.map(nome => ({
+    nome, total: state.treinos.filter(t => t.presentes.includes(nome)).length
+  })).sort((a,b) => b.total - a.total);
+
+  const linhaPresentes = treino.presentes.length > 0
+    ? treino.presentes.map(n => `✅ ${n}`).join('\n')
+    : '(nenhum registrado)';
+
+  const linhaRanking = contagem.slice(0,5).map((a,i) => {
+    const med = ['🥇','🥈','🥉','4️⃣','5️⃣'][i];
+    return `${med} ${a.nome} — ${a.total} treino${a.total!==1?'s':''}`;
+  }).join('\n');
+
+  const texto = `🥋 TREINO — ${formatarData(treino.data)}
+
+PRESENTES (${treino.presentes.length}):
+${linhaPresentes}
+
+🏆 RANKING GERAL:
+${linhaRanking}
+
+OSS! 💪`;
+
+  document.getElementById('export-text').textContent = texto;
+  document.getElementById('export-area').style.display = 'block';
+  document.getElementById('export-area').scrollIntoView({behavior:'smooth'});
+}
+
+function copiarExport() {
+  const texto = document.getElementById('export-text').textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+
+function fecharExport() {
+  document.getElementById('export-area').style.display = 'none';
+}
+
+// ── RELATÓRIO PARA O CLAUDE ────────────────────────────────────
+function gerarRelatorioJiu() {
+  const treino = state.treinos.find(t => t.data === state.treinoAtivo);
+  if (!treino) return;
+
+  const totalTreinos = state.treinos.length;
+  const totalAlunos = state.alunos.length;
+
+  // ranking completo
+  const contagem = state.alunos.map(nome => ({
+    nome,
+    total: state.treinos.filter(t => t.presentes.includes(nome)).length
+  })).sort((a,b) => b.total - a.total);
+
+  const linhaPresentes = treino.presentes.length > 0
+    ? treino.presentes.map(n => `  ✅ ${n}`).join('\n')
+    : '  (nenhum registrado)';
+
+  const linhaAusentes = state.alunos.filter(n => !treino.presentes.includes(n));
+  const linhaAusentesStr = linhaAusentes.length > 0
+    ? linhaAusentes.map(n => `  ❌ ${n}`).join('\n')
+    : '  (todos presentes)';
+
+  const linhaRanking = contagem.map((a,i) => {
+    const med = ['🥇','🥈','🥉'][i] || `${i+1}.`;
+    const pct = totalTreinos > 0 ? Math.round(a.total/totalTreinos*100) : 0;
+    return `  ${med} ${a.nome}: ${a.total} treinos (${pct}% de frequência)`;
+  }).join('\n');
+
+  const texto =
+`🥋 RELATÓRIO JIU-JITSU — ${formatarData(treino.data)}
+
+TREINO DE HOJE:
+Presentes (${treino.presentes.length}/${totalAlunos}):
+${linhaPresentes}
+
+Ausentes:
+${linhaAusentesStr}
+
+RANKING GERAL (${totalTreinos} treinos registrados):
+${linhaRanking}`;
+
+  document.getElementById('relatorio-jiu-text').textContent = texto;
+  document.getElementById('relatorio-jiu-area').style.display = 'block';
+  document.getElementById('relatorio-jiu-area').scrollIntoView({behavior:'smooth'});
+}
+
+function copiarRelatorioJiu() {
+  const texto = document.getElementById('relatorio-jiu-text').textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+
+// ── START ──────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

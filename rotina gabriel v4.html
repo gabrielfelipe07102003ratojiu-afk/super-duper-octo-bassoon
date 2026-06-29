@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROTINA PRIME — Gabriel v4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --black:     #080A0F;
+    --panel:     #0D1117;
+    --border:    #1C2333;
+    --amber:     #E8A020;
+    --amber-dim: #7A4F08;
+    --cyan:      #1DCDCD;
+    --cyan-dim:  #0A4A4A;
+    --violet:    #9B6DFF;
+    --violet-dim:#3A1F88;
+    --green:     #2ECC71;
+    --green-dim: #0F4A2A;
+    --red:       #D94F3D;
+    --red-dim:   #5A1A10;
+    --white:     #E8EDF3;
+    --muted:     #5A6478;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--white); font-family:'Space Grotesk',sans-serif; padding-bottom:60px; }
+  .header { padding:28px 32px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .eyebrow { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.25em; color:var(--amber); text-transform:uppercase; margin-bottom:6px; }
+  .title { font-size:30px; font-weight:700; letter-spacing:-.03em; line-height:1; }
+  .title span { color:var(--amber); }
+  .subtitle { font-size:11px; color:var(--muted); margin-top:7px; font-family:'Space Mono',monospace; letter-spacing:.04em; }
+  .header-stats { display:flex; gap:24px; flex-shrink:0; }
+  .stat { text-align:right; }
+  .stat-num { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; line-height:1; }
+  .stat-num.amber { color:var(--amber); } .stat-num.cyan { color:var(--cyan); }
+  .stat-num.violet { color:var(--violet); } .stat-num.green { color:var(--green); }
+  .stat-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-top:2px; }
+  .alert { padding:9px 32px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+  .alert.amber { background:#130B02; border-top:2px solid var(--amber); }
+  .alert.red   { background:#130404; border-top:2px solid var(--red); }
+  .alert-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; animation:blink 1.6s ease-in-out infinite; }
+  .alert-dot.amber { background:var(--amber); } .alert-dot.red { background:var(--red); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .alert span { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.04em; }
+  .alert.amber span { color:var(--amber); } .alert.red span { color:var(--red); }
+  /* TABS */
+  .day-tabs { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .day-tab { padding:10px 20px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); border-right:1px solid var(--border); white-space:nowrap; cursor:pointer; transition:all .15s; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .day-tab:hover { color:var(--white); background:#111820; }
+  .day-tab.active { color:var(--amber); border-bottom-color:var(--amber); background:#130B02; }
+  .day-tab.special { color:var(--cyan); }
+  .day-tab.special.active { color:var(--cyan); border-bottom-color:var(--cyan); background:#021313; }
+  .day-tab.arsenal { color:var(--violet); }
+  .day-tab.arsenal.active { color:var(--violet); border-bottom-color:var(--violet); background:#150A30; }
+  .sdiv { padding:20px 32px 0; display:flex; align-items:center; gap:12px; }
+  .sdiv-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; white-space:nowrap; }
+  .sdiv-line { flex:1; height:1px; background:var(--border); }
+  .grid { padding:12px 32px 0; display:grid; gap:12px; }
+  .grid.cols1 { grid-template-columns:1fr; }
+  .grid.cols2 { grid-template-columns:1fr 1fr; }
+  .block { background:var(--panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+  .block.amber { border-color:var(--amber-dim); } .block.cyan { border-color:var(--cyan-dim); }
+  .block.violet { border-color:var(--violet-dim); } .block.green { border-color:var(--green-dim); }
+  .block.red { border-color:var(--red-dim); } .block.span2 { grid-column:span 2; }
+  .bhead { display:flex; align-items:center; justify-content:space-between; padding:11px 16px 9px; border-bottom:1px solid var(--border); gap:8px; }
+  .bhead-left { display:flex; align-items:center; gap:8px; }
+  .bicon { font-size:13px; }
+  .btitle { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+  .btitle.amber { color:var(--amber); } .btitle.cyan { color:var(--cyan); }
+  .btitle.violet { color:var(--violet); } .btitle.green { color:var(--green); }
+  .btitle.red { color:var(--red); } .btitle.muted { color:var(--muted); }
+  .btime { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); white-space:nowrap; }
+  .item { display:flex; align-items:flex-start; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); transition:background .12s; }
+  .item:last-child { border-bottom:none; }
+  .item:hover { background:#111820; }
+  .itime { font-family:'Space Mono',monospace; font-size:10px; min-width:50px; padding-top:2px; flex-shrink:0; }
+  .itime.amber { color:var(--amber); } .itime.cyan { color:var(--cyan); }
+  .itime.violet { color:var(--violet); } .itime.green { color:var(--green); }
+  .itime.red { color:var(--red); } .itime.muted { color:var(--muted); }
+  .ibody {}
+  .iname { font-size:13px; font-weight:500; line-height:1.3; color:var(--white); }
+  .iname strong.amber { color:var(--amber); } .iname strong.cyan { color:var(--cyan); }
+  .iname strong.violet { color:var(--violet); } .iname strong.green { color:var(--green); }
+  .iname strong.red { color:var(--red); }
+  .idetail { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.55; font-family:'Space Mono',monospace; }
+  .tags { margin-top:5px; display:flex; gap:5px; flex-wrap:wrap; }
+  .tag { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border-radius:2px; font-weight:700; }
+  .tag.amber { background:#1A1000; color:var(--amber); border:1px solid var(--amber-dim); }
+  .tag.cyan { background:#001A1A; color:var(--cyan); border:1px solid var(--cyan-dim); }
+  .tag.violet { background:#150A30; color:var(--violet); border:1px solid var(--violet-dim); }
+  .tag.green { background:#061A0F; color:var(--green); border:1px solid var(--green-dim); }
+  .tag.red { background:#1A0505; color:var(--red); border:1px solid var(--red-dim); }
+  .tag.muted { background:#111820; color:var(--muted); border:1px solid var(--border); }
+  /* ARSENAL CARDS */
+  .arsenal-grid { padding:14px 16px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .arsenal-card { background:#111820; border:1px solid var(--border); border-radius:4px; overflow:hidden; cursor:pointer; transition:border-color .15s; }
+  .arsenal-card:hover { border-color:var(--violet-dim); }
+  .arsenal-card.selected { border-color:var(--violet); background:#150A30; }
+  .ac-head { padding:10px 14px 8px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .ac-slot { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--violet); letter-spacing:.08em; }
+  .ac-rating { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); }
+  .ac-rating span { color:var(--amber); }
+  .ac-body { padding:10px 14px; }
+  .ac-local { font-size:12px; font-weight:600; color:var(--white); margin-bottom:4px; }
+  .ac-perfil { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; line-height:1.4; margin-bottom:6px; }
+  .ac-abord { font-size:11px; color:var(--white); line-height:1.5; margin-bottom:6px; border-left:2px solid var(--violet-dim); padding-left:8px; }
+  .ac-tags { display:flex; gap:4px; flex-wrap:wrap; }
+  /* SEXTA FIXA */
+  .sexta-fixa { margin:14px 16px; background:#130B02; border:1px solid var(--amber-dim); border-radius:4px; padding:14px 16px; }
+  .sf-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--amber); letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px; }
+  .sf-text { font-size:12px; color:var(--white); line-height:1.6; }
+  .sf-text em { color:var(--muted); font-style:normal; font-family:'Space Mono',monospace; font-size:11px; }
+  .kpi-bar { margin:12px 32px 0; background:var(--panel); border:1px solid var(--border); border-radius:4px; display:grid; grid-template-columns:repeat(5,1fr); }
+  .kpi-cell { padding:14px 16px; border-right:1px solid var(--border); }
+  .kpi-cell:last-child { border-right:none; }
+  .kpi-num { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; line-height:1; margin-bottom:4px; }
+  .kpi-label { font-size:10px; color:var(--muted); line-height:1.4; }
+  .day-panel { display:none; }
+  .day-panel.active { display:block; }
+  @media(max-width:720px){
+    .header{padding:18px 16px 14px;} .alert,.sdiv{padding-left:16px;padding-right:16px;}
+    .grid{padding:10px 16px 0;} .grid.cols2{grid-template-columns:1fr;} .block.span2{grid-column:span 1;}
+    .arsenal-grid{grid-template-columns:1fr;}
+    .kpi-bar{grid-template-columns:1fr 1fr;margin:10px 16px 0;}
+    .kpi-cell:nth-child(2){border-right:none;}
+    .kpi-cell:nth-child(3),.kpi-cell:nth-child(4),.kpi-cell:nth-child(5){border-top:1px solid var(--border);}
+    .kpi-cell:nth-child(4){border-right:none;} .kpi-cell:nth-child(5){border-right:none;grid-column:span 2;}
+    .header-stats{gap:14px;} .day-tabs{padding:0;} .day-tab{padding:10px 14px;font-size:9px;}
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="eyebrow">Sistema Prime v2 · Operador Individual · Rio Verde — GO</div>
+    <div class="title">ROTINA <span>GABRIEL</span></div>
+    <div class="subtitle">05:40 ACORDA → 22:00 DORME &nbsp;·&nbsp; GAME SOCIAL TODO DIA &nbsp;·&nbsp; CAMPO SEXTA + 1 SLOT SEMANAL</div>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-num amber">50</div><div class="stat-label">Lig/manhã</div></div>
+    <div class="stat"><div class="stat-num green">7h</div><div class="stat-label">Sono</div></div>
+    <div class="stat"><div class="stat-num violet">2×45</div><div class="stat-label">Estudo/dia</div></div>
+  </div>
+</div>
+<div class="alert amber">
+  <div class="alert-dot amber"></div>
+  <span>22:00 É INTOCÁVEL — Uma noite que passa quebra a malhação das 06h e as ligações da manhã.</span>
+</div>
+<div class="alert red">
+  <div class="alert-dot red"></div>
+  <span>DOMINGO INTOCÁVEL — Nenhuma ligação, nenhum CRM, nenhuma gravação.</span>
+</div>
+<div class="day-tabs">
+  <div class="day-tab active" onclick="showDay('seg')">SEG</div>
+  <div class="day-tab" onclick="showDay('ter')">TER</div>
+  <div class="day-tab" onclick="showDay('qua')">QUA</div>
+  <div class="day-tab" onclick="showDay('qui')">QUI</div>
+  <div class="day-tab special" onclick="showDay('sex')">SEX</div>
+  <div class="day-tab special" onclick="showDay('sab')">SÁB</div>
+  <div class="day-tab arsenal" onclick="showDay('arsenal')">⚡ ARSENAL</div>
+</div>
+<!-- ══ SEG ══ -->
+<div class="day-panel active" id="panel-seg">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Segunda-feira</div><div class="sdiv-line"></div></div>
+  <div class="grid cols2">
+    <div class="block green">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">06:00 → 07:30</div></div>
+      <div class="item"><div class="itime green">06:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Sem celular profissional. Sem CRM. Energia para o dia.</div></div></div>
+      <div class="item"><div class="itime muted">07:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento</div><div class="idetail">Scripts mentalizados no caminho.</div></div></div>
+    </div>
+    <div class="block amber">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">⚡</div><div class="btitle amber">Ignição</div></div><div class="btime">08:00 → 08:15</div></div>
+      <div class="item"><div class="itime amber">08:00</div><div class="ibody"><div class="iname"><strong class="amber">CRM aberto · leads carregados · scripts revisados</strong></div><div class="idetail">Nenhuma ligação antes disso.</div><div class="tags"><span class="tag amber">ritual fixo</span></div></div></div>
+    </div>
+    <div class="block amber span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz de Ligações</div></div><div class="btime">08:15 → 12:00</div></div>
+      <div class="item"><div class="itime amber">08:15</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">Blocos de 40 min ligando + 5 min CRM. Registrar durante — não acumular.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag cyan">registrar na hora</span></div></div></div>
+      <div class="item"><div class="itime amber">10:00</div><div class="ibody"><div class="iname">Pausa técnica — 10 min</div><div class="idetail">Água, movimento. "O que travou no script?"</div></div></div>
+      <div class="item"><div class="itime amber">11:45</div><div class="ibody"><div class="iname">Fechar blitz · CRM atualizado</div><div class="tags"><span class="tag cyan">KPI: 50 tentativas</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço + Reset</div></div><div class="btime">12:00 → 13:30</div></div>
+      <div class="item"><div class="itime muted">12:00</div><div class="ibody"><div class="iname">Sair fisicamente do espaço</div><div class="idetail">Sem WhatsApp profissional. Sem feed. Recuperação real.</div><div class="tags"><span class="tag muted">obrigatório</span></div></div></div>
+    </div>
+    <div class="block red">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔁</div><div class="btitle red">Follow-up Manual</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime red">13:30</div><div class="ibody"><div class="iname"><strong class="red">30 min · Fila A e P somente</strong></div><div class="idetail">Some quando o agente assumir.</div><div class="tags"><span class="tag red">temporário</span></div></div></div>
+    </div>
+    <div class="block violet">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🧠</div><div class="btitle violet">Estudo</div></div><div class="btime">14:00 → 15:30</div></div>
+      <div class="item"><div class="itime violet">14:00</div><div class="ibody"><div class="iname"><strong class="violet">Vendas — SPIN / fechamento</strong></div><div class="idetail">45 min foco total. Anotar 1 insight aplicável amanhã.</div><div class="tags"><span class="tag violet">segunda · bloco 1</span></div></div></div>
+      <div class="item"><div class="itime violet">14:45</div><div class="ibody"><div class="iname"><strong class="violet">IA — Agente / automação</strong></div><div class="idetail">45 min. O que testar ou ajustar no agente essa semana.</div><div class="tags"><span class="tag violet">segunda · bloco 2</span></div></div></div>
+    </div>
+    <div class="block cyan span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social + Gravação</div></div><div class="btime">15:30 → 17:30</div></div>
+      <div class="item"><div class="itime cyan">15:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 1h</strong></div><div class="idetail">Sair do escritório. 3 conversas genuínas mínimo. Café, galeria, rua.<br>Meta: qualidade da conversa, não número de cartões.</div><div class="tags"><span class="tag cyan">todo dia</span><span class="tag muted">3 conversas mínimo</span></div></div></div>
+      <div class="item"><div class="itime cyan">16:30</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — 1 conteúdo</strong></div><div class="idetail">Insight do game social ou das ligações. Real > produzido. SEG → vendas.</div><div class="tags"><span class="tag cyan">1 vídeo · todo dia</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle muted">Encerramento</div></div><div class="btime">17:30 → 18:00</div></div>
+      <div class="item"><div class="itime amber">17:30</div><div class="ibody"><div class="iname"><strong class="amber">Resumo → Agente · CRM fechado</strong></div><div class="tags"><span class="tag amber">chat fim do dia</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Jiu-Jitsu</div></div><div class="btime">20:00 → 21:30</div></div>
+      <div class="item"><div class="itime green">20:00</div><div class="ibody"><div class="iname"><strong class="green">Treino — seg → qui</strong></div></div></div>
+      <div class="item"><div class="itime muted">21:30</div><div class="ibody"><div class="iname">Retorno · banho · dormir</div><div class="tags"><span class="tag red">22:00 teto absoluto</span></div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ TER ══ -->
+<div class="day-panel" id="panel-ter">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Terça-feira</div><div class="sdiv-line"></div></div>
+  <div class="grid cols2">
+    <div class="block green">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">06:00 → 07:30</div></div>
+      <div class="item"><div class="itime green">06:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Sem celular profissional. Sem CRM. Energia para o dia.</div></div></div>
+      <div class="item"><div class="itime muted">07:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento</div><div class="idetail">Scripts mentalizados no caminho.</div></div></div>
+    </div>
+    <div class="block amber">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">⚡</div><div class="btitle amber">Ignição</div></div><div class="btime">08:00 → 08:15</div></div>
+      <div class="item"><div class="itime amber">08:00</div><div class="ibody"><div class="iname"><strong class="amber">CRM aberto · leads carregados · scripts revisados</strong></div><div class="idetail">Nenhuma ligação antes disso.</div><div class="tags"><span class="tag amber">ritual fixo</span></div></div></div>
+    </div>
+    <div class="block amber span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz de Ligações</div></div><div class="btime">08:15 → 10:00</div></div>
+      <div class="item"><div class="itime amber">08:15</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">1h45 de ritmo alto. CRM já aberto antes das 08h15. Sem pausa — sai pro judô às 10h.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag cyan">registrar na hora</span></div></div></div>
+      <div class="item"><div class="itime amber">09:55</div><div class="ibody"><div class="iname">Fechar blitz · CRM atualizado</div><div class="tags"><span class="tag cyan">KPI: 50 tentativas</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Judô</div></div><div class="btime">10:00 → 13:30</div></div>
+      <div class="item"><div class="itime green">10:00</div><div class="ibody"><div class="iname"><strong class="green">Saída para o judô</strong></div><div class="idetail">Treino às 11h. Deslocamento + aquecimento.</div><div class="tags"><span class="tag green">terça · judô</span></div></div></div>
+      <div class="item"><div class="itime muted">13:30</div><div class="ibody"><div class="iname">Retorno · pronto para a tarde</div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço + Reset</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime muted">13:30</div><div class="ibody"><div class="iname">Almoço rápido — retorno do judô</div><div class="idetail">Sem WhatsApp profissional. Recuperação real.</div><div class="tags"><span class="tag muted">obrigatório</span></div></div></div>
+    </div>
+    <div class="block cyan span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social + Gravação</div></div><div class="btime">15:30 → 17:30</div></div>
+      <div class="item"><div class="itime cyan">15:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 1h</strong></div><div class="idetail">Sair do escritório. 3 conversas genuínas mínimo. Café, galeria, rua.</div><div class="tags"><span class="tag cyan">todo dia</span><span class="tag muted">3 conversas mínimo</span></div></div></div>
+      <div class="item"><div class="itime cyan">16:30</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — IA</strong></div><div class="idetail">Terça → conteúdo sobre IA ou agente.</div><div class="tags"><span class="tag cyan">1 vídeo · todo dia</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle muted">Encerramento</div></div><div class="btime">17:30 → 18:00</div></div>
+      <div class="item"><div class="itime amber">17:30</div><div class="ibody"><div class="iname"><strong class="amber">Resumo → Agente · CRM fechado</strong></div><div class="tags"><span class="tag amber">chat fim do dia</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Jiu-Jitsu</div></div><div class="btime">20:00 → 21:30</div></div>
+      <div class="item"><div class="itime green">20:00</div><div class="ibody"><div class="iname"><strong class="green">Treino</strong></div></div></div>
+      <div class="item"><div class="itime muted">21:30</div><div class="ibody"><div class="iname">Retorno · banho · dormir</div><div class="tags"><span class="tag red">22:00 teto absoluto</span></div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ QUA ══ -->
+<div class="day-panel" id="panel-qua">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Quarta-feira</div><div class="sdiv-line"></div></div>
+  <div class="grid cols2">
+    <div class="block green">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">06:00 → 07:30</div></div>
+      <div class="item"><div class="itime green">06:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Sem celular profissional. Sem CRM. Energia para o dia.</div></div></div>
+      <div class="item"><div class="itime muted">07:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento</div><div class="idetail">Scripts mentalizados no caminho.</div></div></div>
+    </div>
+    <div class="block amber">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">⚡</div><div class="btitle amber">Ignição</div></div><div class="btime">08:00 → 08:15</div></div>
+      <div class="item"><div class="itime amber">08:00</div><div class="ibody"><div class="iname"><strong class="amber">CRM aberto · leads carregados · scripts revisados</strong></div><div class="idetail">Nenhuma ligação antes disso.</div><div class="tags"><span class="tag amber">ritual fixo</span></div></div></div>
+    </div>
+    <div class="block amber span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz de Ligações</div></div><div class="btime">08:15 → 12:00</div></div>
+      <div class="item"><div class="itime amber">08:15</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">Blocos de 40 min ligando + 5 min CRM. Registrar durante — não acumular.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag cyan">registrar na hora</span></div></div></div>
+      <div class="item"><div class="itime amber">10:00</div><div class="ibody"><div class="iname">Pausa técnica — 10 min</div><div class="idetail">Água, movimento. "O que travou no script?"</div></div></div>
+      <div class="item"><div class="itime amber">11:45</div><div class="ibody"><div class="iname">Fechar blitz · CRM atualizado</div><div class="tags"><span class="tag cyan">KPI: 50 tentativas</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço + Reset</div></div><div class="btime">12:00 → 13:30</div></div>
+      <div class="item"><div class="itime muted">12:00</div><div class="ibody"><div class="iname">Sair fisicamente do espaço</div><div class="idetail">Sem WhatsApp profissional. Sem feed. Recuperação real.</div><div class="tags"><span class="tag muted">obrigatório</span></div></div></div>
+    </div>
+    <div class="block red">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔁</div><div class="btitle red">Follow-up Manual</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime red">13:30</div><div class="ibody"><div class="iname"><strong class="red">30 min · Fila A e P somente</strong></div><div class="idetail">Some quando o agente assumir.</div><div class="tags"><span class="tag red">temporário</span></div></div></div>
+    </div>
+    <div class="block violet">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🧠</div><div class="btitle violet">Estudo</div></div><div class="btime">14:00 → 15:30</div></div>
+      <div class="item"><div class="itime violet">14:00</div><div class="ibody"><div class="iname"><strong class="violet">IA — Agente / automação</strong></div><div class="idetail">45 min. Testar, ajustar, documentar.</div><div class="tags"><span class="tag violet">quarta · bloco 1</span></div></div></div>
+      <div class="item"><div class="itime violet">14:45</div><div class="ibody"><div class="iname"><strong class="violet">Oratória — voz, presença, dicção</strong></div><div class="idetail">45 min. Praticar em voz alta. Gravar e ouvir.</div><div class="tags"><span class="tag violet">quarta · bloco 2</span></div></div></div>
+    </div>
+    <div class="block cyan span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social + Gravação</div></div><div class="btime">15:30 → 17:30</div></div>
+      <div class="item"><div class="itime cyan">15:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 1h</strong></div><div class="idetail">Sair do escritório. 3 conversas genuínas mínimo. Café, galeria, rua.</div><div class="tags"><span class="tag cyan">todo dia</span><span class="tag muted">3 conversas mínimo</span></div></div></div>
+      <div class="item"><div class="itime cyan">16:30</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — livre</strong></div><div class="idetail">Insight do game social ou das ligações. Real > produzido.</div><div class="tags"><span class="tag cyan">1 vídeo · todo dia</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle muted">Encerramento</div></div><div class="btime">17:30 → 18:00</div></div>
+      <div class="item"><div class="itime amber">17:30</div><div class="ibody"><div class="iname"><strong class="amber">Resumo → Agente · CRM fechado</strong></div><div class="tags"><span class="tag amber">chat fim do dia</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Jiu-Jitsu</div></div><div class="btime">20:00 → 21:30</div></div>
+      <div class="item"><div class="itime green">20:00</div><div class="ibody"><div class="iname"><strong class="green">Treino</strong></div></div></div>
+      <div class="item"><div class="itime muted">21:30</div><div class="ibody"><div class="iname">Retorno · banho · dormir</div><div class="tags"><span class="tag red">22:00 teto absoluto</span></div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ QUI ══ -->
+<div class="day-panel" id="panel-qui">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Quinta-feira</div><div class="sdiv-line"></div></div>
+  <div class="grid cols2">
+    <div class="block green">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">06:00 → 07:30</div></div>
+      <div class="item"><div class="itime green">06:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Sem celular profissional. Sem CRM. Energia para o dia.</div></div></div>
+      <div class="item"><div class="itime muted">07:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento</div><div class="idetail">Scripts mentalizados no caminho.</div></div></div>
+    </div>
+    <div class="block amber">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">⚡</div><div class="btitle amber">Ignição</div></div><div class="btime">08:00 → 08:15</div></div>
+      <div class="item"><div class="itime amber">08:00</div><div class="ibody"><div class="iname"><strong class="amber">CRM aberto · leads carregados · scripts revisados</strong></div><div class="idetail">Nenhuma ligação antes disso.</div><div class="tags"><span class="tag amber">ritual fixo</span></div></div></div>
+    </div>
+    <div class="block amber span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz de Ligações</div></div><div class="btime">08:15 → 12:00</div></div>
+      <div class="item"><div class="itime amber">08:15</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">Blocos de 40 min ligando + 5 min CRM. Registrar durante — não acumular.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag cyan">registrar na hora</span></div></div></div>
+      <div class="item"><div class="itime amber">10:00</div><div class="ibody"><div class="iname">Pausa técnica — 10 min</div><div class="idetail">Água, movimento. "O que travou no script?"</div></div></div>
+      <div class="item"><div class="itime amber">11:45</div><div class="ibody"><div class="iname">Fechar blitz · CRM atualizado</div><div class="tags"><span class="tag cyan">KPI: 50 tentativas</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço + Reset</div></div><div class="btime">12:00 → 13:30</div></div>
+      <div class="item"><div class="itime muted">12:00</div><div class="ibody"><div class="iname">Sair fisicamente do espaço</div><div class="idetail">Sem WhatsApp profissional. Sem feed. Recuperação real.</div><div class="tags"><span class="tag muted">obrigatório</span></div></div></div>
+    </div>
+    <div class="block red">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔁</div><div class="btitle red">Follow-up Manual</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime red">13:30</div><div class="ibody"><div class="iname"><strong class="red">30 min · Fila A e P somente</strong></div><div class="idetail">Some quando o agente assumir.</div><div class="tags"><span class="tag red">temporário</span></div></div></div>
+    </div>
+    <div class="block violet">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🧠</div><div class="btitle violet">Estudo</div></div><div class="btime">14:00 → 15:30</div></div>
+      <div class="item"><div class="itime violet">14:00</div><div class="ibody"><div class="iname"><strong class="violet">Vendas — objeção / negociação</strong></div><div class="idetail">45 min. Pegar objeção mais frequente da semana e treinar contorno.</div><div class="tags"><span class="tag violet">quinta · bloco 1</span></div></div></div>
+      <div class="item"><div class="itime violet">14:45</div><div class="ibody"><div class="iname"><strong class="violet">IA — Agente / automação</strong></div><div class="idetail">45 min. Testar, ajustar, documentar.</div><div class="tags"><span class="tag violet">quinta · bloco 2</span></div></div></div>
+    </div>
+    <div class="block cyan span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social + Gravação</div></div><div class="btime">15:30 → 17:30</div></div>
+      <div class="item"><div class="itime cyan">15:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 1h</strong></div><div class="idetail">Sair do escritório. 3 conversas genuínas mínimo. Café, galeria, rua.</div><div class="tags"><span class="tag cyan">todo dia</span><span class="tag muted">3 conversas mínimo</span></div></div></div>
+      <div class="item"><div class="itime cyan">16:30</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — IA</strong></div><div class="idetail">Quinta → conteúdo sobre IA.</div><div class="tags"><span class="tag cyan">1 vídeo · todo dia</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle muted">Encerramento</div></div><div class="btime">17:30 → 18:00</div></div>
+      <div class="item"><div class="itime amber">17:30</div><div class="ibody"><div class="iname"><strong class="amber">Resumo → Agente · CRM fechado</strong></div><div class="tags"><span class="tag amber">chat fim do dia</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Jiu-Jitsu</div></div><div class="btime">20:00 → 21:30</div></div>
+      <div class="item"><div class="itime green">20:00</div><div class="ibody"><div class="iname"><strong class="green">Treino — último da semana</strong></div></div></div>
+      <div class="item"><div class="itime muted">21:30</div><div class="ibody"><div class="iname">Retorno · banho · dormir</div><div class="tags"><span class="tag red">22:00 teto absoluto</span></div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ SEX ══ -->
+<div class="day-panel" id="panel-sex">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Sexta-feira — Judô 11h · Bar Fixo à Noite</div><div class="sdiv-line"></div></div>
+  <div class="grid cols2">
+    <div class="block green">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">06:00 → 07:30</div></div>
+      <div class="item"><div class="itime green">06:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Sem celular profissional. Sem CRM. Energia para o dia.</div></div></div>
+      <div class="item"><div class="itime muted">07:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento</div><div class="idetail">Scripts mentalizados no caminho.</div></div></div>
+    </div>
+    <div class="block amber">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">⚡</div><div class="btitle amber">Ignição</div></div><div class="btime">08:00 → 08:15</div></div>
+      <div class="item"><div class="itime amber">08:00</div><div class="ibody"><div class="iname"><strong class="amber">CRM aberto · leads carregados · scripts revisados</strong></div><div class="idetail">Nenhuma ligação antes disso.</div><div class="tags"><span class="tag amber">ritual fixo</span></div></div></div>
+    </div>
+    <div class="block amber span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz de Ligações</div></div><div class="btime">08:15 → 10:00</div></div>
+      <div class="item"><div class="itime amber">08:15</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">1h45 de ritmo alto. CRM já aberto antes das 08h15. Sem pausa — sai pro judô às 10h.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag cyan">registrar na hora</span></div></div></div>
+      <div class="item"><div class="itime amber">09:55</div><div class="ibody"><div class="iname">Fechar blitz · CRM atualizado</div><div class="tags"><span class="tag cyan">KPI: 50 tentativas</span></div></div></div>
+    </div>
+    <div class="block green span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Judô</div></div><div class="btime">10:00 → 13:30</div></div>
+      <div class="item"><div class="itime green">10:00</div><div class="ibody"><div class="iname"><strong class="green">Saída para o judô</strong></div><div class="idetail">Treino às 11h. Deslocamento + aquecimento.</div><div class="tags"><span class="tag green">sexta · judô</span></div></div></div>
+      <div class="item"><div class="itime muted">13:30</div><div class="ibody"><div class="iname">Retorno · pronto para a tarde</div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço + Reset</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime muted">13:30</div><div class="ibody"><div class="iname">Almoço rápido — retorno do judô</div><div class="idetail">Sem WhatsApp profissional. Recuperação real.</div><div class="tags"><span class="tag muted">obrigatório</span></div></div></div>
+    </div>
+    <div class="block red">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🔁</div><div class="btitle red">Follow-up Manual</div></div><div class="btime">13:30 → 14:00</div></div>
+      <div class="item"><div class="itime red">13:30</div><div class="ibody"><div class="iname"><strong class="red">30 min · Fila A e P somente</strong></div><div class="idetail">Some quando o agente assumir.</div><div class="tags"><span class="tag red">temporário</span></div></div></div>
+    </div>
+    <div class="block violet">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🧠</div><div class="btitle violet">Estudo</div></div><div class="btime">14:00 → 15:30</div></div>
+      <div class="item"><div class="itime violet">14:00</div><div class="ibody"><div class="iname"><strong class="violet">Oratória — voz, presença, dicção</strong></div><div class="idetail">45 min. Praticar em voz alta. Gravar e ouvir.</div><div class="tags"><span class="tag violet">sexta · bloco 1</span></div></div></div>
+      <div class="item"><div class="itime violet">14:45</div><div class="ibody"><div class="iname"><strong class="violet">Vendas — SPIN / fechamento</strong></div><div class="idetail">45 min. Fechar a semana com o que travou no script.</div><div class="tags"><span class="tag violet">sexta · bloco 2</span></div></div></div>
+    </div>
+    <div class="block cyan span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social + Gravação</div></div><div class="btime">15:30 → 17:30</div></div>
+      <div class="item"><div class="itime cyan">15:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 1h</strong></div><div class="idetail">Sair do escritório. 3 conversas genuínas mínimo. Aquece pra noite.</div><div class="tags"><span class="tag cyan">todo dia</span><span class="tag muted">3 conversas mínimo</span></div></div></div>
+      <div class="item"><div class="itime cyan">16:30</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — fechamento de semana</strong></div><div class="idetail">O que a semana ensinou. Formato livre.</div><div class="tags"><span class="tag cyan">1 vídeo · todo dia</span></div></div></div>
+    </div>
+    <div class="block span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle amber">Encerramento Semanal</div></div><div class="btime">17:30 → 18:00</div></div>
+      <div class="item"><div class="itime amber">17:30</div><div class="ibody"><div class="iname"><strong class="amber">Resumo semanal → Agente · CRM fechado</strong></div><div class="idetail">Resumo mais completo — fechamento da semana operacional.</div><div class="tags"><span class="tag amber">chat fim de semana</span></div></div></div>
+    </div>
+    <div class="block red span2">
+      <div class="bhead"><div class="bhead-left"><div class="bicon">🍺</div><div class="btitle red">Prospecção Relacional — FIXO</div></div><div class="btime">20:00 → 21:30</div></div>
+      <div class="item"><div class="itime red">20:00</div><div class="ibody"><div class="iname"><strong class="red">Bar com Atos — toda sexta</strong></div><div class="idetail">Zero pitch. Zero cartão na mão. Presença e conversa genuína.<br>Lead que aparecer = bônus, não objetivo.</div><div class="tags"><span class="tag red">relacionamento · sem pitch</span><span class="tag amber">fixo semanal</span></div></div></div>
+      <div class="item"><div class="itime muted">21:30</div><div class="ibody"><div class="iname">Retorno · dormir</div><div class="tags"><span class="tag red">22:00 teto absoluto</span></div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ SÁB ══ -->
+<div class="day-panel" id="panel-sab">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Sábado — Malhação 07h · Saída 15h · Jiu 16h</div><div class="sdiv-line"></div></div>
+  <div class="grid cols1">
+    <div class="block green"><div class="bhead"><div class="bhead-left"><div class="bicon">🏋</div><div class="btitle green">Malhação</div></div><div class="btime">07:00 → 08:30</div></div>
+      <div class="item"><div class="itime green">07:00</div><div class="ibody"><div class="iname"><strong class="green">Academia — 1h30</strong></div><div class="idetail">Uma hora mais tarde. Aproveite.</div></div></div>
+      <div class="item"><div class="itime muted">08:30</div><div class="ibody"><div class="iname">Banho · café · deslocamento → imobiliária ~09:00</div></div></div>
+    </div>
+    <div class="block amber"><div class="bhead"><div class="bhead-left"><div class="bicon">📞</div><div class="btitle amber">Blitz</div></div><div class="btime">09:00 → 12:00</div></div>
+      <div class="item"><div class="itime amber">09:00</div><div class="ibody"><div class="iname"><strong class="amber">50 ligações novas</strong></div><div class="idetail">Sem follow-up hoje. Janela menor, foco total.</div><div class="tags"><span class="tag amber">meta inegociável</span><span class="tag muted">sem follow-up</span></div></div></div>
+    </div>
+    <div class="block"><div class="bhead"><div class="bhead-left"><div class="bicon">🔋</div><div class="btitle muted">Almoço</div></div><div class="btime">12:00 → 13:00</div></div>
+      <div class="item"><div class="itime muted">12:00</div><div class="ibody"><div class="iname">Almoço leve — precisa estar bem pro treino</div></div></div>
+    </div>
+    <div class="block violet"><div class="bhead"><div class="bhead-left"><div class="bicon">🧠</div><div class="btitle violet">Estudo + Gravação</div></div><div class="btime">13:00 → 14:30</div></div>
+      <div class="item"><div class="itime violet">13:00</div><div class="ibody"><div class="iname"><strong class="violet">Revisão livre — consolidar semana</strong></div><div class="idetail">Rever insights anotados. Consolidar, não consumir novo.</div><div class="tags"><span class="tag violet">sábado</span></div></div></div>
+      <div class="item"><div class="itime cyan">13:45</div><div class="ibody"><div class="iname"><strong class="cyan">Gravação — retrospectiva de semana</strong></div><div class="tags"><span class="tag cyan">1 vídeo</span></div></div></div>
+    </div>
+    <div class="block cyan"><div class="bhead"><div class="bhead-left"><div class="bicon">🎮</div><div class="btitle cyan">Game Social</div></div><div class="btime">14:30 → 15:00</div></div>
+      <div class="item"><div class="itime cyan">14:30</div><div class="ibody"><div class="iname"><strong class="cyan">Game Social — 30 min</strong></div><div class="idetail">Reduzido. 2 conversas mínimo antes de sair pro Jiu.</div><div class="tags"><span class="tag cyan">versão curta · sábado</span></div></div></div>
+    </div>
+    <div class="block amber"><div class="bhead"><div class="bhead-left"><div class="bicon">📋</div><div class="btitle amber">Encerramento</div></div><div class="btime">até 15:00</div></div>
+      <div class="item"><div class="itime amber">14:50</div><div class="ibody"><div class="iname"><strong class="amber">Resumo → Agente · CRM fechado até segunda</strong></div><div class="idetail">Saída do escritório às 15:00. Sem exceção.</div><div class="tags"><span class="tag amber">chat fim do dia</span><span class="tag muted">saída 15:00</span></div></div></div>
+    </div>
+    <div class="block green"><div class="bhead"><div class="bhead-left"><div class="bicon">🥋</div><div class="btitle green">Jiu-Jitsu</div></div><div class="btime">16:00 → 17:30</div></div>
+      <div class="item"><div class="itime green">16:00</div><div class="ibody"><div class="iname"><strong class="green">Treino de sábado</strong></div><div class="idetail">Noite livre. Fim de semana ganho.</div></div></div>
+    </div>
+  </div>
+</div>
+<!-- ══ ARSENAL ══ -->
+<div class="day-panel" id="panel-arsenal">
+  <div class="sdiv" style="padding-top:24px"><div class="sdiv-label">Arsenal de Prospecção — Escolha 1 por semana</div><div class="sdiv-line"></div></div>
+  <div class="grid cols1">
+    <div class="block violet">
+      <div class="bhead">
+        <div class="bhead-left"><div class="bicon">⚡</div><div class="btitle violet">Slots disponíveis · ativar 1 por semana além da sexta</div></div>
+      </div>
+      <div class="sexta-fixa">
+        <div class="sf-label">🍺 Fixo toda sexta — não conta como slot semanal</div>
+        <div class="sf-text">Bar com Atos · 20h–21h30 · <em>relacionamento puro · sem pitch · lead é bônus</em></div>
+      </div>
+      <div class="arsenal-grid">
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">08:00 · CHEGADA</div>
+            <div class="ac-rating">ROI <span>★★★☆☆</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">☕ Padaria / café próximo à imobiliária</div>
+            <div class="ac-perfil">Perfil: comerciantes, profissionais no rush matinal, vizinhança</div>
+            <div class="ac-abord">Chegar 15 min antes. Sentar, pedir café. Deixar a conversa acontecer — não forçar. "Você trabalha aqui perto?"</div>
+            <div class="ac-tags"><span class="tag muted">~15 min</span><span class="tag cyan">relacionamento</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">12:00 · ALMOÇO</div>
+            <div class="ac-rating">ROI <span>★★★★☆</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🍽 Restaurante movimentado / praça central</div>
+            <div class="ac-perfil">Perfil: executivos, empresários, funcionários públicos — quem almoça fora tem renda</div>
+            <div class="ac-abord">Sentar em mesa compartilhada ou balcão. Conversa natural sobre o bairro ou o restaurante. Sem pressa — almoço dura 40 min.</div>
+            <div class="ac-tags"><span class="tag muted">40 min</span><span class="tag green">captação + relac.</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">FIM DE TARDE · 15:30–17:00</div>
+            <div class="ac-rating">ROI <span>★★★★★</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🏋 Academia · escola comercial · galeria</div>
+            <div class="ac-perfil">Perfil: adultos ativos 25–45 anos, renda média-alta, rotina estabelecida</div>
+            <div class="ac-abord">Entrar como cliente/visitante. Conversar sobre o espaço. "Você frequenta aqui há muito tempo?" leva ao bairro, que leva a moradia.</div>
+            <div class="ac-tags"><span class="tag muted">1h</span><span class="tag green">melhor slot da semana</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">FIM DE TARDE · 15:30–17:00</div>
+            <div class="ac-rating">ROI <span>★★★★☆</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🏢 Condomínio comercial · escritórios · coworking</div>
+            <div class="ac-perfil">Perfil: empreendedores, autônomos, profissionais liberais — decisores de compra</div>
+            <div class="ac-abord">"Estou conhecendo os empreendimentos da região, você tem empresa aqui?" Abre conversa sobre estrutura, crescimento, e inevitavelmente chega em imóvel.</div>
+            <div class="ac-tags"><span class="tag muted">1h</span><span class="tag green">captação direta</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">FEIRA / ESPAÇO PÚBLICO · MANHÃ</div>
+            <div class="ac-rating">ROI <span>★★★☆☆</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🌳 Feira livre · praça · parque</div>
+            <div class="ac-perfil">Perfil: famílias, casais jovens, aposentados — ritmo relaxado, mais receptivos</div>
+            <div class="ac-abord">Conversa longa vale mais que cartão. Sábado não é dia de pitch — é dia de semear. "Você mora aqui na região?" é a entrada perfeita.</div>
+            <div class="ac-tags"><span class="tag cyan">relacionamento</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">EVENTO / NETWORKING · 16:00+</div>
+            <div class="ac-rating">ROI <span>★★★★★</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🎯 Evento de negócios · associação comercial · lançamento</div>
+            <div class="ac-perfil">Perfil: empresários e profissionais em modo de conexão — já estão lá pra isso</div>
+            <div class="ac-abord">Quando houver evento na cidade, quarta é o melhor dia pra encaixar. ROI mais alto de todos os slots — mas depende de agenda da cidade.</div>
+            <div class="ac-tags"><span class="tag violet">maior ROI</span><span class="tag green">captação direta</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">09:00 · PORTA A PORTA</div>
+            <div class="ac-rating">ROI <span>★★★★★</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🚪 Comércio local — lojas, salões, clínicas, escritórios</div>
+            <div class="ac-perfil">Perfil: comerciantes e donos de negócio — renda estabelecida, enraizados na cidade</div>
+            <div class="ac-abord">Casual e direto. Calção ou roupa leve funciona — tira a formalidade. "Estou conhecendo os comércios da região, posso te fazer uma pergunta rápida?" Você controla o volume, o bairro e o ritmo. Solo ou com Atos.</div>
+            <div class="ac-tags"><span class="tag muted">qualquer dia · ~9h</span><span class="tag muted">30–60 min</span><span class="tag green">captação direta</span><span class="tag amber">já testado</span></div>
+          </div>
+        </div>
+        <div class="arsenal-card" onclick="toggleCard(this)">
+          <div class="ac-head">
+            <div class="ac-slot">MANHÃ OU SEX TARDE · PRAÇA PÚBLICA</div>
+            <div class="ac-rating">ROI <span>★★★★☆</span></div>
+          </div>
+          <div class="ac-body">
+            <div class="ac-local">🌳 Praças da cidade — Rio Verde tem várias e são movimentadas</div>
+            <div class="ac-perfil">Perfil: variado — famílias, aposentados de manhã · jovens e casais no fim de tarde</div>
+            <div class="ac-abord">Manhã: ritmo tranquilo, conversa longa, perfil mais maduro com renda consolidada. Sexta tarde (15h30–17h30): mais jovem, mais receptivo a lançamentos. Praça é território neutro — as pessoas estão relaxadas e abertas.</div>
+            <div class="ac-tags"><span class="tag muted">manhã · qualquer dia</span><span class="tag muted">tarde · sex ou sáb</span><span class="tag amber">já testado</span><span class="tag cyan">relacionamento</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- KPI BAR -->
+<div class="kpi-bar">
+  <div class="kpi-cell"><div class="kpi-num amber">300</div><div class="kpi-label">ligações novas<br>mínimas/semana</div></div>
+  <div class="kpi-cell"><div class="kpi-num" style="color:var(--cyan)">7</div><div class="kpi-label">game social<br>dias/semana</div></div>
+  <div class="kpi-cell"><div class="kpi-num violet">6</div><div class="kpi-label">conteúdos<br>publicados/semana</div></div>
+  <div class="kpi-cell"><div class="kpi-num green">5x</div><div class="kpi-label">jiu-jitsu<br>seg→qui + sáb</div></div>
+  <div class="kpi-cell"><div class="kpi-num" style="color:var(--green)">7h</div><div class="kpi-label">sono mínimo<br>todo dia</div></div>
+</div>
+<script>
+  function showDay(day) {
+    document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + day).classList.add('active');
+    document.querySelectorAll('.day-tab').forEach(t => {
+      const txt = t.textContent.trim().toLowerCase();
+      if (day === 'arsenal' && txt.includes('arsenal')) t.classList.add('active');
+      else if (day === 'seg' && txt === 'seg') t.classList.add('active');
+      else if (day === 'ter' && txt === 'ter') t.classList.add('active');
+      else if (day === 'qua' && txt === 'qua') t.classList.add('active');
+      else if (day === 'qui' && txt === 'qui') t.classList.add('active');
+      else if (day === 'sex' && txt === 'sex') t.classList.add('active');
+      else if (day === 'sab' && txt === 'sáb') t.classList.add('active');
+    });
+  }
+  function toggleCard(card) {
+    card.classList.toggle('selected');
+  }
+</script>
+</body>
+</html>

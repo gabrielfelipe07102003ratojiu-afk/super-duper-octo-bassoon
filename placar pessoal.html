@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placar Gabriel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --black:      #080A0F;
+    --panel:      #0D1117;
+    --border:     #1C2333;
+    --amber:      #E8A020;
+    --amber-dim:  #7A4F08;
+    --green:      #2ECC71;
+    --green-dim:  #0F4A2A;
+    --red:        #D94F3D;
+    --red-dim:    #5A1A10;
+    --cyan:       #1DCDCD;
+    --cyan-dim:   #0A4A4A;
+    --violet:     #9B6DFF;
+    --violet-dim: #3A1F88;
+    --muted:      #5A6478;
+    --white:      #E8EDF3;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--white); font-family:'Space Grotesk',sans-serif; min-height:100vh; padding-bottom:80px; }
+
+  /* HEADER */
+  .header { padding:24px 20px 16px; border-bottom:1px solid var(--border); }
+  .eyebrow { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--amber); text-transform:uppercase; margin-bottom:6px; }
+  .title { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+  .title span { color:var(--amber); }
+  .subtitle { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-top:6px; }
+
+  /* TABS */
+  .tabs { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .tab { padding:10px 18px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-right:1px solid var(--border); white-space:nowrap; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
+  .tab:hover { color:var(--white); }
+  .tab.active { color:var(--amber); border-bottom-color:var(--amber); background:#130B02; }
+
+  /* PANELS */
+  .panel { display:none; padding:16px 20px; }
+  .panel.active { display:block; }
+  .section-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:10px; }
+
+  /* HOJE */
+  .hoje-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
+  .hoje-data { font-family:'Space Mono',monospace; font-size:12px; color:var(--amber); }
+  .score-badge { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; color:var(--amber); }
+  .score-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; }
+
+  /* ITENS DO DIA */
+  .itens-grid { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .item-card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:12px 14px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:all .15s; }
+  .item-card.done { border-color:var(--green-dim); background:#061A0F; }
+  .item-card.done.amber-item { border-color:var(--amber-dim); background:#130B02; }
+  .item-card.done.violet-item { border-color:var(--violet-dim); background:#0D0520; }
+  .item-card.done.cyan-item { border-color:var(--cyan-dim); background:#001A1A; }
+  .item-icon { font-size:20px; flex-shrink:0; }
+  .item-body { flex:1; }
+  .item-nome { font-size:14px; font-weight:500; }
+  .item-card.done .item-nome { color:var(--green); }
+  .item-card.done.amber-item .item-nome { color:var(--amber); }
+  .item-card.done.violet-item .item-nome { color:var(--violet); }
+  .item-card.done.cyan-item .item-nome { color:var(--cyan); }
+  .item-meta { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
+  .item-check { width:24px; height:24px; border-radius:3px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; transition:all .15s; }
+  .item-card.done .item-check { background:var(--green); border-color:var(--green); color:var(--black); }
+  .item-card.done.amber-item .item-check { background:var(--amber); border-color:var(--amber); }
+  .item-card.done.violet-item .item-check { background:var(--violet); border-color:var(--violet); }
+  .item-card.done.cyan-item .item-check { background:var(--cyan); border-color:var(--cyan); }
+
+  /* INPUT LIGAÇÕES */
+  .lig-input-wrap { display:flex; align-items:center; gap:8px; }
+  .lig-input { background:#111820; border:1px solid var(--border); border-radius:3px; color:var(--amber); font-family:'Space Mono',monospace; font-size:16px; font-weight:700; width:70px; padding:4px 8px; text-align:center; outline:none; }
+  .lig-input:focus { border-color:var(--amber); }
+  .lig-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); }
+
+  /* SCORE BAR */
+  .score-bar-wrap { background:var(--border); border-radius:3px; height:8px; margin-bottom:20px; overflow:hidden; }
+  .score-bar { height:100%; border-radius:3px; transition:width .5s ease; background:linear-gradient(90deg, var(--amber), var(--green)); }
+
+  /* SEMANA MINI */
+  .semana-mini { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:20px; }
+  .dia-mini { aspect-ratio:1; border-radius:3px; display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:9px; flex-direction:column; gap:1px; background:var(--panel); border:1px solid var(--border); }
+  .dia-mini.hoje-mini { border-color:var(--amber); }
+  .dia-mini .dm-label { color:var(--muted); font-size:8px; }
+  .dia-mini .dm-score { font-weight:700; }
+  .dm-score.full { color:var(--green); }
+  .dm-score.half { color:var(--amber); }
+  .dm-score.low { color:var(--red); }
+  .dm-score.empty { color:var(--border); }
+
+  /* GRÁFICO */
+  .chart-wrap { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:14px; margin-bottom:14px; }
+  .chart-title { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:12px; }
+  .chart-bars { display:flex; align-items:flex-end; gap:4px; height:80px; }
+  .chart-bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .chart-bar { width:100%; border-radius:2px 2px 0 0; transition:height .4s ease; min-height:2px; }
+  .chart-bar.amber { background:var(--amber); }
+  .chart-bar.green { background:var(--green); }
+  .chart-bar.low { background:var(--red); }
+  .chart-bar-label { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); text-align:center; }
+  .chart-bar-val { font-family:'Space Mono',monospace; font-size:9px; color:var(--white); }
+
+  /* STATS CARDS */
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:12px 14px; }
+  .stat-num { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; line-height:1; margin-bottom:3px; }
+  .stat-lbl { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; line-height:1.4; }
+  .stat-num.amber { color:var(--amber); }
+  .stat-num.green { color:var(--green); }
+  .stat-num.violet { color:var(--violet); }
+  .stat-num.cyan { color:var(--cyan); }
+
+  /* ITEM BREAKDOWN */
+  .breakdown { display:flex; flex-direction:column; gap:6px; }
+  .bk-row { display:flex; align-items:center; gap:10px; }
+  .bk-icon { font-size:14px; width:20px; text-align:center; }
+  .bk-nome { font-size:12px; color:var(--muted); flex:1; }
+  .bk-bar-wrap { width:80px; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .bk-bar { height:100%; border-radius:3px; }
+  .bk-pct { font-family:'Space Mono',monospace; font-size:10px; color:var(--white); min-width:30px; text-align:right; }
+
+  /* STREAK FIRE */
+  .streak-display { text-align:center; padding:20px; }
+  .streak-num { font-family:'Space Mono',monospace; font-size:56px; font-weight:700; color:var(--amber); line-height:1; }
+  .streak-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:6px; letter-spacing:.1em; text-transform:uppercase; }
+
+  .btn { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:8px 14px; border-radius:4px; border:none; cursor:pointer; transition:all .15s; }
+  .btn-amber { background:var(--amber); color:var(--black); font-weight:700; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); }
+  .btn-ghost:hover { border-color:var(--amber); color:var(--amber); }
+
+  .nav-semana { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .nav-semana button { background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'Space Mono',monospace; font-size:16px; width:32px; height:32px; border-radius:3px; cursor:pointer; }
+  .nav-semana button:hover { border-color:var(--amber); color:var(--amber); }
+  .nav-semana span { font-family:'Space Mono',monospace; font-size:11px; color:var(--white); flex:1; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="eyebrow">Sistema Prime · Operador Individual</div>
+  <div class="title">PLACAR <span>GABRIEL</span></div>
+  <div class="subtitle">Disciplina acumulada · dia a dia</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('hoje')">Hoje</div>
+  <div class="tab" onclick="showTab('semana')">Semana</div>
+  <div class="tab" onclick="showTab('evolucao')">Evolução</div>
+</div>
+
+<!-- HOJE -->
+<div class="panel active" id="panel-hoje">
+  <div class="hoje-header">
+    <div>
+      <div class="section-label">Check-in diário</div>
+      <div class="hoje-data" id="hoje-data"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="score-badge" id="score-hoje">0/7</div>
+      <div class="score-label">tarefas feitas</div>
+    </div>
+  </div>
+  <button class="btn btn-amber" onclick="gerarRelatorio()" style="width:100%;margin-bottom:14px;">📋 Gerar relatório para o Claude</button>
+  <div id="relatorio-area" style="display:none;margin-bottom:14px;">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:14px;">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">Cola isso no chat do Claude</div>
+      <div id="relatorio-text" style="font-family:'Space Mono',monospace;font-size:11px;color:var(--white);line-height:1.7;white-space:pre-wrap;background:#111820;padding:12px;border-radius:3px;border:1px solid var(--border);"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-amber" onclick="copiarRelatorio()" style="flex:1">Copiar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('relatorio-area').style.display='none'">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div class="score-bar-wrap">
+    <div class="score-bar" id="score-bar" style="width:0%"></div>
+  </div>
+  <div class="itens-grid" id="itens-grid"></div>
+</div>
+
+<!-- SEMANA -->
+<div class="panel" id="panel-semana">
+  <div class="nav-semana">
+    <button onclick="navSemana(-1)">‹</button>
+    <span id="semana-label"></span>
+    <button onclick="navSemana(1)">›</button>
+  </div>
+  <div class="semana-mini" id="semana-mini"></div>
+  <div class="chart-wrap">
+    <div class="chart-title">Score por dia</div>
+    <div class="chart-bars" id="chart-semana"></div>
+  </div>
+  <div class="breakdown" id="breakdown-semana"></div>
+</div>
+
+<!-- EVOLUÇÃO -->
+<div class="panel" id="panel-evolucao">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="streak-display">
+    <div class="streak-num" id="streak-num">0</div>
+    <div class="streak-label">🔥 dias consecutivos com 4+ tarefas</div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">Últimas 4 semanas — score médio</div>
+    <div class="chart-bars" id="chart-mensal"></div>
+  </div>
+  <div style="margin-top:14px;">
+    <div class="section-label" style="margin-bottom:10px;">Consistência por hábito</div>
+    <div class="breakdown" id="breakdown-geral"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const ITENS = [
+  { id:'malhacao', nome:'Malhação',    icon:'🏋', cor:'green',  cls:''},
+  { id:'jiu',      nome:'Jiu-Jitsu',   icon:'🥋', cor:'green',  cls:''},
+  { id:'judo',     nome:'Judô',         icon:'🎽', cor:'green',  cls:''},
+  { id:'estudo',   nome:'Estudo',       icon:'🧠', cor:'violet', cls:'violet-item'},
+  { id:'ligacoes', nome:'Ligações',     icon:'📞', cor:'amber',  cls:'amber-item', numero:true},
+  { id:'game',     nome:'Game Social',  icon:'🎮', cor:'cyan',   cls:'cyan-item'},
+  { id:'gravacao', nome:'Gravação',     icon:'🎬', cor:'cyan',   cls:'cyan-item'},
+];
+
+const META_LIG = 50;
+
+// ── STATE ──────────────────────────────────────────────────────
+let state = { dias: {} }; // {YYYY-MM-DD: {malhacao:bool, jiu:bool, estudo:bool, ligacoes:N, game:bool, gravacao:bool}}
+let semanaOffset = 0;
+
+function salvar() {
+  try { localStorage.setItem('placar_gabriel', JSON.stringify(state)); } catch(e) {}
+}
+function carregar() {
+  try {
+    const d = localStorage.getItem('placar_gabriel');
+    if (d) state = JSON.parse(d);
+  } catch(e) {}
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function hojeStr() { return new Date().toISOString().slice(0,10); }
+
+function formatarData(str) {
+  if (!str) return '';
+  const [y,m,d] = str.split('-');
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const dt = new Date(y, m-1, d);
+  return `${dias[dt.getDay()]}, ${d} de ${meses[m-1]} de ${y}`;
+}
+
+function addDias(str, n) {
+  const d = new Date(str + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+
+function scoresDia(data) {
+  const dia = state.dias[data] || {};
+  let feitos = 0;
+  ITENS.forEach(item => {
+    if (item.numero) { if ((dia[item.id]||0) >= META_LIG) feitos++; }
+    else { if (dia[item.id]) feitos++; }
+  });
+  return feitos;
+}
+
+function inicioDaSemana(offset) {
+  const hoje = new Date();
+  const dow = hoje.getDay(); // 0=dom
+  const seg = new Date(hoje);
+  seg.setDate(hoje.getDate() - (dow === 0 ? 6 : dow - 1) + offset * 7);
+  return seg.toISOString().slice(0,10);
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  const map = {hoje:0, semana:1, evolucao:2};
+  document.querySelectorAll('.tab')[map[tab]].classList.add('active');
+  if (tab === 'semana') renderSemana();
+  if (tab === 'evolucao') renderEvolucao();
+}
+
+// ── HOJE ──────────────────────────────────────────────────────
+function renderHoje() {
+  const hoje = hojeStr();
+  document.getElementById('hoje-data').textContent = formatarData(hoje);
+  if (!state.dias[hoje]) state.dias[hoje] = {};
+  const dia = state.dias[hoje];
+
+  const grid = document.getElementById('itens-grid');
+  grid.innerHTML = '';
+
+  ITENS.forEach(item => {
+    const done = item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    const card = document.createElement('div');
+    card.className = `item-card ${item.cls} ${done ? 'done' : ''}`;
+
+    let metaHtml = '';
+    if (item.numero) {
+      const val = dia[item.id] || 0;
+      metaHtml = `
+        <div class="lig-input-wrap" onclick="event.stopPropagation()">
+          <input class="lig-input" type="number" min="0" max="999" value="${val}"
+            onchange="setLigacoes(this.value)"
+            oninput="setLigacoes(this.value)">
+          <span class="lig-label">/ ${META_LIG} meta</span>
+        </div>`;
+    } else {
+      metaHtml = `<div class="item-meta">${done ? 'Concluído hoje ✓' : 'Toca para marcar'}</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="item-icon">${item.icon}</div>
+      <div class="item-body">
+        <div class="item-nome">${item.nome}</div>
+        ${metaHtml}
+      </div>
+      <div class="item-check">${done ? '✓' : ''}</div>
+    `;
+
+    if (!item.numero) {
+      card.addEventListener('click', () => toggleItem(item.id));
+    }
+    grid.appendChild(card);
+  });
+
+  atualizarScore();
+}
+
+function toggleItem(id) {
+  const hoje = hojeStr();
+  if (!state.dias[hoje]) state.dias[hoje] = {};
+  state.dias[hoje][id] = !state.dias[hoje][id];
+  salvar();
+  renderHoje();
+}
+
+function setLigacoes(val) {
+  const hoje = hojeStr();
+  if (!state.dias[hoje]) state.dias[hoje] = {};
+  const n = parseInt(val) || 0;
+  state.dias[hoje].ligacoes = n;
+  salvar();
+  atualizarScore();
+}
+
+function atualizarScore() {
+  const hoje = hojeStr();
+  const score = scoresDia(hoje);
+  const total = ITENS.length;
+  document.getElementById('score-hoje').textContent = `${score}/${total}`;
+  document.getElementById('score-bar').style.width = `${(score/total)*100}%`;
+  // atualizar checks visuais
+  const cards = document.querySelectorAll('.item-card');
+  cards.forEach((card, i) => {
+    const item = ITENS[i];
+    const dia = state.dias[hoje] || {};
+    const done = item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    card.classList.toggle('done', done);
+    const check = card.querySelector('.item-check');
+    if (check) check.textContent = done ? '✓' : '';
+    const meta = card.querySelector('.item-meta');
+    if (meta) meta.textContent = done ? 'Concluído hoje ✓' : 'Toca para marcar';
+  });
+}
+
+// ── SEMANA ──────────────────────────────────────────────────
+function navSemana(dir) {
+  semanaOffset += dir;
+  if (semanaOffset > 0) semanaOffset = 0;
+  renderSemana();
+}
+
+function renderSemana() {
+  const seg = inicioDaSemana(semanaOffset);
+  const dias = Array.from({length:7}, (_,i) => addDias(seg, i));
+  const labels = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const hoje = hojeStr();
+
+  // label semana
+  const fim = dias[6];
+  const fmtSeg = seg.slice(8,10)+'/'+seg.slice(5,7);
+  const fmtFim = fim.slice(8,10)+'/'+fim.slice(5,7);
+  document.getElementById('semana-label').textContent = `${fmtSeg} — ${fmtFim}`;
+
+  // mini calendário
+  const mini = document.getElementById('semana-mini');
+  mini.innerHTML = dias.map((d, i) => {
+    const score = scoresDia(d);
+    const max = ITENS.length;
+    const cls = score === 0 ? 'empty' : score >= max ? 'full' : score >= max/2 ? 'half' : 'low';
+    const isHoje = d === hoje;
+    const isFuturo = d > hoje;
+    return `<div class="dia-mini ${isHoje?'hoje-mini':''}">
+      <span class="dm-label">${labels[i]}</span>
+      <span class="dm-score ${isFuturo?'empty':cls}">${isFuturo?'·':score}</span>
+    </div>`;
+  }).join('');
+
+  // gráfico barras
+  const chart = document.getElementById('chart-semana');
+  const max = ITENS.length;
+  chart.innerHTML = dias.map((d, i) => {
+    const score = scoresDia(d);
+    const isFuturo = d > hoje;
+    const pct = isFuturo ? 0 : (score / max) * 100;
+    const cor = pct >= 100 ? 'green' : pct >= 50 ? 'amber' : 'low';
+    return `<div class="chart-bar-col">
+      <span class="chart-bar-val" style="font-size:9px;color:var(--muted)">${isFuturo?'':score}</span>
+      <div class="chart-bar ${cor}" style="height:${pct}%"></div>
+      <span class="chart-bar-label">${labels[i]}</span>
+    </div>`;
+  }).join('');
+
+  // breakdown por item
+  const breakdown = document.getElementById('breakdown-semana');
+  const cores = {malhacao:'#2ECC71',jiu:'#2ECC71',estudo:'#9B6DFF',ligacoes:'#E8A020',game:'#1DCDCD',gravacao:'#1DCDCD'};
+  breakdown.innerHTML = ITENS.map(item => {
+    const feitos = dias.filter(d => {
+      const dia = state.dias[d] || {};
+      return item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    }).length;
+    const diasPassados = dias.filter(d => d <= hoje).length;
+    const pct = diasPassados > 0 ? Math.round(feitos/diasPassados*100) : 0;
+    return `<div class="bk-row">
+      <span class="bk-icon">${item.icon}</span>
+      <span class="bk-nome">${item.nome}</span>
+      <div class="bk-bar-wrap"><div class="bk-bar" style="width:${pct}%;background:${cores[item.id]}"></div></div>
+      <span class="bk-pct">${feitos}/${diasPassados}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── EVOLUÇÃO ──────────────────────────────────────────────────
+function renderEvolucao() {
+  const hoje = hojeStr();
+
+  // stats gerais
+  const todasDatas = Object.keys(state.dias).filter(d => d <= hoje);
+  const totalDias = todasDatas.length;
+  const totalLig = todasDatas.reduce((acc,d) => acc + (state.dias[d].ligacoes||0), 0);
+  const diasPerfeitos = todasDatas.filter(d => scoresDia(d) === ITENS.length).length;
+  const mediaSemanal = totalDias > 0 ? (todasDatas.reduce((acc,d) => acc+scoresDia(d),0)/totalDias*7).toFixed(1) : '0';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num amber">${totalLig}</div><div class="stat-lbl">Ligações totais</div></div>
+    <div class="stat-card"><div class="stat-num green">${diasPerfeitos}</div><div class="stat-lbl">Dias 100% feitos</div></div>
+    <div class="stat-card"><div class="stat-num violet">${mediaSemanal}</div><div class="stat-lbl">Score médio por semana</div></div>
+    <div class="stat-card"><div class="stat-num cyan">${totalDias}</div><div class="stat-lbl">Dias registrados</div></div>
+  `;
+
+  // streak
+  let streak = 0;
+  let d = hoje;
+  while (true) {
+    if (scoresDia(d) >= 4) { streak++; d = addDias(d, -1); }
+    else break;
+    if (streak > 365) break;
+  }
+  document.getElementById('streak-num').textContent = streak + (streak === 1 ? ' dia' : ' dias');
+
+  // gráfico 4 semanas
+  const semanas = Array.from({length:4}, (_,i) => {
+    const seg = inicioDaSemana(-(3-i));
+    const dias = Array.from({length:7}, (_,j) => addDias(seg, j)).filter(d => d <= hoje);
+    const scores = dias.map(d => scoresDia(d));
+    const media = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+    const fmtSeg = seg.slice(8,10)+'/'+seg.slice(5,7);
+    return { label: fmtSeg, media, dias: dias.length };
+  });
+
+  const maxMedia = Math.max(...semanas.map(s=>s.media), 0.1);
+  document.getElementById('chart-mensal').innerHTML = semanas.map(s => {
+    const pct = (s.media / ITENS.length) * 100;
+    const cor = pct >= 80 ? 'green' : pct >= 50 ? 'amber' : 'low';
+    return `<div class="chart-bar-col">
+      <span class="chart-bar-val">${s.media.toFixed(1)}</span>
+      <div class="chart-bar ${cor}" style="height:${pct}%"></div>
+      <span class="chart-bar-label">${s.label}</span>
+    </div>`;
+  }).join('');
+
+  // breakdown geral
+  const cores = {malhacao:'#2ECC71',jiu:'#2ECC71',estudo:'#9B6DFF',ligacoes:'#E8A020',game:'#1DCDCD',gravacao:'#1DCDCD'};
+  document.getElementById('breakdown-geral').innerHTML = ITENS.map(item => {
+    const feitos = todasDatas.filter(d => {
+      const dia = state.dias[d] || {};
+      return item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    }).length;
+    const pct = totalDias > 0 ? Math.round(feitos/totalDias*100) : 0;
+    return `<div class="bk-row">
+      <span class="bk-icon">${item.icon}</span>
+      <span class="bk-nome">${item.nome}</span>
+      <div class="bk-bar-wrap"><div class="bk-bar" style="width:${pct}%;background:${cores[item.id]}"></div></div>
+      <span class="bk-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+carregar();
+renderHoje();
+
+// ── RELATÓRIO PARA O CLAUDE ────────────────────────────────────
+function gerarRelatorio() {
+  const hoje = hojeStr();
+  const dia = state.dias[hoje] || {};
+  const score = scoresDia(hoje);
+  const total = ITENS.length;
+
+  // streak
+  let streak = 0;
+  let d = hoje;
+  while (streak < 365) {
+    if (scoresDia(d) >= 4) { streak++; d = addDias(d, -1); }
+    else break;
+  }
+
+  // semana atual
+  const seg = inicioDaSemana(0);
+  const diasSemana = Array.from({length:7}, (_,i) => addDias(seg, i)).filter(d => d <= hoje);
+  const scoresSemana = diasSemana.map(d => scoresDia(d));
+  const mediaSemana = scoresSemana.length > 0
+    ? (scoresSemana.reduce((a,b)=>a+b,0)/scoresSemana.length).toFixed(1)
+    : '0';
+
+  // total ligações
+  const todasDatas = Object.keys(state.dias).filter(d => d <= hoje);
+  const totalLig = todasDatas.reduce((acc,d) => acc + (state.dias[d].ligacoes||0), 0);
+  const totalDias = todasDatas.length;
+
+  // linha por item
+  const linhaItens = ITENS.map(item => {
+    if (item.numero) {
+      const n = dia[item.id] || 0;
+      return `${item.icon} ${item.nome}: ${n} ligações ${n >= META_LIG ? '✅' : '❌'} (meta: ${META_LIG})`;
+    }
+    return `${item.icon} ${item.nome}: ${dia[item.id] ? '✅' : '❌'}`;
+  }).join('\n');
+
+  // breakdown semana
+  const linhaSemana = ITENS.map(item => {
+    const feitos = diasSemana.filter(d => {
+      const dd = state.dias[d] || {};
+      return item.numero ? (dd[item.id]||0) >= META_LIG : !!dd[item.id];
+    }).length;
+    return `  ${item.icon} ${item.nome}: ${feitos}/${diasSemana.length}`;
+  }).join('\n');
+
+  const texto =
+`📊 RELATÓRIO PLACAR GABRIEL
+Data: ${formatarData(hoje)}
+Score do dia: ${score}/${total} (${Math.round(score/total*100)}%)
+
+CHECKLIST DE HOJE:
+${linhaItens}
+
+SEMANA ATUAL:
+Score médio: ${mediaSemana}/${total}
+${linhaSemana}
+
+ACUMULADO GERAL:
+Total de ligações: ${totalLig}
+Dias registrados: ${totalDias}
+Streak atual (4+ tarefas): ${streak} dia${streak!==1?'s':''}`;
+
+  document.getElementById('relatorio-text').textContent = texto;
+  document.getElementById('relatorio-area').style.display = 'block';
+  document.getElementById('relatorio-area').scrollIntoView({behavior:'smooth'});
+}
+
+function copiarRelatorio() {
+  const texto = document.getElementById('relatorio-text').textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placar Calls — Gabriel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+  :root {
+    --black:     #080A0F;
+    --panel:     #0D1117;
+    --border:    #1C2333;
+    --amber:     #E8A020;
+    --amber-dim: #7A4F08;
+    --green:     #2ECC71;
+    --green-dim: #0F4A2A;
+    --red:       #D94F3D;
+    --red-dim:   #5A1A10;
+    --cyan:      #1DCDCD;
+    --cyan-dim:  #0A4A4A;
+    --blue:      #4A9EFF;
+    --blue-dim:  #0A2A5A;
+    --yellow:    #F1C40F;
+    --yellow-dim:#5A4700;
+    --muted:     #5A6478;
+    --white:     #E8EDF3;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--white); font-family:'Space Grotesk',sans-serif; min-height:100vh; padding-bottom:80px; }
+
+  /* HEADER */
+  .header { padding:20px 20px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--black); z-index:20; }
+  .header-left .eyebrow { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--amber); text-transform:uppercase; margin-bottom:4px; }
+  .header-left .title { font-size:22px; font-weight:700; letter-spacing:-.02em; }
+  .header-left .title span { color:var(--amber); }
+  .timer-box { text-align:right; }
+  .timer { font-family:'Space Mono',monospace; font-size:28px; font-weight:700; color:var(--amber); letter-spacing:.05em; }
+  .timer-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-top:2px; }
+
+  /* TABS */
+  .tabs { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .tab { flex:1; padding:11px; text-align:center; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border:none; background:transparent; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; white-space:nowrap; }
+  .tab:hover { color:var(--white); }
+  .tab.active { color:var(--amber); border-bottom-color:var(--amber); background:#130B02; }
+
+  /* SCREENS */
+  .screen { display:none; } .screen.active { display:block; }
+
+  /* CONFIG BAR */
+  .config-bar { background:var(--panel); padding:10px 20px; display:flex; gap:12px; align-items:center; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .config-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; }
+  .date-input { background:var(--black); border:1px solid var(--border); color:var(--white); border-radius:4px; padding:5px 10px; font-family:'Space Mono',monospace; font-size:12px; width:140px; outline:none; }
+  .date-input:focus { border-color:var(--amber); }
+  .meta-input { background:var(--black); border:1px solid var(--border); color:var(--white); border-radius:4px; padding:5px 8px; font-family:'Space Mono',monospace; font-size:12px; font-weight:700; width:50px; text-align:center; outline:none; }
+  .meta-input:focus { border-color:var(--amber); }
+  .timer-btn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:'Space Mono',monospace; font-size:16px; padding:5px 14px; border-radius:4px; cursor:pointer; transition:all .15s; }
+  .timer-btn:hover { border-color:var(--amber); color:var(--amber); }
+  .timer-btn.running { border-color:var(--green); color:var(--green); }
+
+  /* CARDS */
+  .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:16px 20px 0; }
+  @media(max-width:600px) { .cards { grid-template-columns:repeat(2,1fr); } }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:16px 12px; text-align:center; position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .card.c1::before { background:var(--blue); }
+  .card.c2::before { background:var(--yellow); }
+  .card.c3::before { background:var(--green); }
+  .card.c4::before { background:var(--red); }
+  .card-icon { font-size:18px; margin-bottom:4px; }
+  .card-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:.15em; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+  .card-num { font-family:'Space Mono',monospace; font-size:48px; font-weight:700; line-height:1; }
+  .card.c1 .card-num { color:var(--blue); }
+  .card.c2 .card-num { color:var(--yellow); }
+  .card.c3 .card-num { color:var(--green); }
+  .card.c4 .card-num { color:var(--red); }
+  .card-sub { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); margin-top:4px; }
+  .prog-wrap { background:var(--border); border-radius:20px; height:4px; overflow:hidden; margin-top:8px; }
+  .prog-bar { height:100%; border-radius:20px; transition:width .4s ease; }
+  .card.c1 .prog-bar { background:var(--blue); }
+  .card.c2 .prog-bar { background:var(--yellow); }
+  .card.c3 .prog-bar { background:var(--green); }
+  .card.c4 .prog-bar { background:var(--red); }
+
+  /* BOTÕES */
+  .btns { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px 20px; }
+  @media(max-width:600px) { .btns { grid-template-columns:repeat(2,1fr); } }
+  .btn-wrap { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:10px; }
+  .btn-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; margin-bottom:8px; text-align:center; }
+  .btn-row { display:flex; gap:6px; }
+  .btn { border:none; border-radius:4px; padding:12px 0; font-size:22px; cursor:pointer; font-family:'Space Mono',monospace; font-weight:700; transition:transform .1s; flex:1; line-height:1; }
+  .btn:active { transform:scale(.88); }
+  .b1p { background:#0A2A5A; color:var(--blue); } .b1p:hover { background:#1A3A7A; }
+  .b2p { background:#3A2E00; color:var(--yellow); } .b2p:hover { background:#5A4700; }
+  .b3p { background:var(--green-dim); color:var(--green); } .b3p:hover { background:#1A5A30; }
+  .b4p { background:var(--red-dim); color:var(--red); } .b4p:hover { background:#7A2020; }
+  .bm  { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:16px; } .bm:hover { color:var(--white); }
+
+  /* SAVE AREA */
+  .save-area { padding:0 20px 16px; display:flex; gap:10px; }
+  .save-btn { flex:1; background:var(--amber); color:var(--black); border:none; border-radius:4px; padding:13px; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; cursor:pointer; transition:opacity .15s; }
+  .save-btn:hover { opacity:.85; }
+  .reset-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:13px 16px; font-family:'Space Mono',monospace; font-size:10px; cursor:pointer; transition:all .15s; }
+  .reset-btn:hover { border-color:var(--red); color:var(--red); }
+
+  /* RELATÓRIO */
+  .rel-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:13px 14px; font-family:'Space Mono',monospace; font-size:10px; cursor:pointer; transition:all .15s; }
+  .rel-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+
+  /* FOOTER STATUS */
+  .footer { background:var(--panel); border-top:1px solid var(--border); padding:10px 20px; position:sticky; bottom:0; }
+  .footer-status { font-family:'Space Mono',monospace; font-size:11px; color:var(--amber); letter-spacing:.1em; }
+
+  /* HISTÓRICO */
+  .hist-wrap, .crm-wrap { padding:16px 20px; }
+  .hist-header, .crm-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  .section-label { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; }
+  .clear-btn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:5px 12px; font-family:'Space Mono',monospace; font-size:9px; cursor:pointer; transition:all .15s; }
+  .clear-btn:hover { border-color:var(--red); color:var(--red); }
+
+  .sum-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  @media(max-width:600px) { .sum-grid { grid-template-columns:repeat(2,1fr); } }
+  .sum-card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:12px; text-align:center; }
+  .sum-label { font-family:'Space Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; }
+  .sum-num { font-family:'Space Mono',monospace; font-size:22px; font-weight:700; }
+
+  table { width:100%; border-collapse:collapse; }
+  th { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
+  td { padding:10px; border-bottom:1px solid #0F0F18; font-size:12px; color:#C0C0C0; }
+  tr:hover td { background:var(--panel); }
+  .td-date { font-family:'Space Mono',monospace; color:var(--muted); font-size:11px; }
+  .td1 { color:var(--blue); font-family:'Space Mono',monospace; font-weight:700; font-size:14px; }
+  .td2 { color:var(--yellow); font-family:'Space Mono',monospace; font-weight:700; font-size:14px; }
+  .td3 { color:var(--green); font-family:'Space Mono',monospace; font-weight:700; font-size:14px; }
+  .td4 { color:var(--red); font-family:'Space Mono',monospace; font-weight:700; font-size:14px; }
+
+  /* CRM */
+  .crm-add-btn { background:var(--amber); color:var(--black); border:none; border-radius:4px; padding:8px 16px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; cursor:pointer; transition:opacity .15s; }
+  .crm-add-btn:hover { opacity:.85; }
+  .crm-form { background:var(--panel); border:1px solid var(--green-dim); border-radius:4px; padding:16px; margin-bottom:16px; display:none; }
+  .crm-form.open { display:block; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  @media(max-width:500px) { .form-grid { grid-template-columns:1fr; } }
+  .form-field { display:flex; flex-direction:column; gap:5px; }
+  .form-field label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; }
+  .form-field input, .form-field textarea, .form-field select { background:var(--black); border:1px solid var(--border); color:var(--white); border-radius:4px; padding:8px 10px; font-size:13px; font-family:'Space Grotesk',sans-serif; outline:none; }
+  .form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color:var(--amber); }
+  .form-field textarea { resize:vertical; min-height:64px; }
+  .form-full { grid-column:1/-1; }
+  .form-btns { display:flex; gap:8px; }
+  .form-save { background:var(--amber); color:var(--black); border:none; border-radius:4px; padding:9px 18px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; cursor:pointer; }
+  .form-cancel { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:9px 14px; font-family:'Space Mono',monospace; font-size:10px; cursor:pointer; }
+
+  .crm-list { display:flex; flex-direction:column; gap:8px; }
+  .crm-card { background:var(--panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; transition:border-color .15s; }
+  .crm-card:hover { border-color:var(--amber-dim); }
+  .crm-card-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px 10px; cursor:pointer; }
+  .crm-card-name { font-size:15px; font-weight:700; }
+  .crm-card-num { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:2px; }
+  .crm-card-date { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); }
+  .crm-card-body { padding:0 16px 12px; display:none; }
+  .crm-card-body.open { display:block; }
+  .crm-field-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.12em; color:var(--amber); text-transform:uppercase; margin-bottom:3px; margin-top:10px; }
+  .crm-field-val { font-size:13px; color:#A0B0B8; line-height:1.6; }
+  .crm-card-actions { display:flex; gap:8px; margin-top:12px; }
+  .crm-edit-btn { background:transparent; border:1px solid var(--blue-dim); color:var(--blue); border-radius:3px; padding:4px 10px; font-family:'Space Mono',monospace; font-size:9px; cursor:pointer; }
+  .crm-edit-btn:hover { background:var(--blue-dim); }
+  .crm-del-btn { background:transparent; border:1px solid var(--red-dim); color:var(--red); border-radius:3px; padding:4px 10px; font-family:'Space Mono',monospace; font-size:9px; cursor:pointer; }
+  .crm-del-btn:hover { background:var(--red-dim); }
+  .crm-badge { background:#130B02; border:1px solid var(--amber-dim); border-radius:20px; padding:2px 10px; font-family:'Space Mono',monospace; font-size:9px; color:var(--amber); letter-spacing:.08em; text-transform:uppercase; }
+
+  /* EXPORT BOX */
+  .export-box { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:14px; margin-top:12px; display:none; }
+  .export-box.open { display:block; }
+  .export-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+  .export-text { font-family:'Space Mono',monospace; font-size:11px; color:var(--white); line-height:1.7; white-space:pre-wrap; background:#111820; padding:12px; border-radius:3px; border:1px solid var(--border); }
+  .export-actions { display:flex; gap:8px; margin-top:10px; }
+  .btn-amber { background:var(--amber); color:var(--black); border:none; border-radius:4px; padding:8px 14px; font-family:'Space Mono',monospace; font-size:10px; font-weight:700; cursor:pointer; flex:1; }
+  .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:4px; padding:8px 12px; font-family:'Space Mono',monospace; font-size:10px; cursor:pointer; }
+  .btn-ghost:hover { border-color:var(--amber); color:var(--amber); }
+
+  /* EMPTY */
+  .empty { text-align:center; padding:40px 16px; font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:.1em; line-height:1.8; }
+
+  /* ANIMATIONS */
+  @keyframes pulse { 0%{transform:scale(1)} 40%{transform:scale(1.08)} 100%{transform:scale(1)} }
+  .pulse { animation:pulse .25s ease; }
+  .celebration { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.75); z-index:100; opacity:0; pointer-events:none; transition:opacity .3s; }
+  .celebration.show { opacity:1; pointer-events:all; }
+  .cel-box { background:var(--panel); border:2px solid var(--amber); border-radius:8px; padding:36px 48px; text-align:center; }
+  .cel-emoji { font-size:48px; }
+  .cel-title { font-family:'Space Mono',monospace; font-size:18px; color:var(--amber); letter-spacing:.1em; margin-top:10px; }
+  .toast { position:fixed; bottom:60px; left:50%; transform:translateX(-50%); background:var(--amber); color:var(--black); border-radius:4px; padding:9px 20px; font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.08em; opacity:0; transition:opacity .3s; z-index:200; white-space:nowrap; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Sistema Prime · Rio Verde — GO</div>
+    <div class="title">CALLS <span>AO VIVO</span></div>
+  </div>
+  <div class="timer-box">
+    <div class="timer" id="timer">00:00</div>
+    <div class="timer-label">Tempo de rodada</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('placar',this)">📞 Placar</button>
+  <button class="tab" onclick="showTab('historico',this)">📊 Histórico</button>
+  <button class="tab" onclick="showTab('crm',this)">👥 CRM</button>
+</div>
+
+<!-- ── PLACAR ── -->
+<div class="screen active" id="screen-placar">
+  <div class="config-bar">
+    <span class="config-label">Data:</span>
+    <input class="date-input" type="date" id="dataHoje">
+    <span class="config-label">Meta feitas:</span><input class="meta-input" id="m1" type="number" value="50" min="1" onchange="update()">
+    <span class="config-label">Atendidas:</span><input class="meta-input" id="m2" type="number" value="22" min="1" onchange="update()">
+    <span class="config-label">Retomados:</span><input class="meta-input" id="m3" type="number" value="9" min="1" onchange="update()">
+    <span class="config-label">Visitas:</span><input class="meta-input" id="m4" type="number" value="3" min="1" onchange="update()">
+    <button class="timer-btn" id="timerBtn" onclick="startStop()">▶ Iniciar</button>
+  </div>
+
+  <div class="cards">
+    <div class="card c1">
+      <div class="card-icon">📞</div>
+      <div class="card-label">Ligações Feitas</div>
+      <div class="card-num" id="n1">0</div>
+      <div class="card-sub" id="s1">meta: 50</div>
+      <div class="prog-wrap"><div class="prog-bar" id="p1" style="width:0%"></div></div>
+    </div>
+    <div class="card c2">
+      <div class="card-icon">✅</div>
+      <div class="card-label">Atendidas</div>
+      <div class="card-num" id="n2">0</div>
+      <div class="card-sub" id="s2">meta: 22</div>
+      <div class="prog-wrap"><div class="prog-bar" id="p2" style="width:0%"></div></div>
+    </div>
+    <div class="card c3">
+      <div class="card-icon">🤝</div>
+      <div class="card-label">Retomados</div>
+      <div class="card-num" id="n3">0</div>
+      <div class="card-sub" id="s3">meta: 9</div>
+      <div class="prog-wrap"><div class="prog-bar" id="p3" style="width:0%"></div></div>
+    </div>
+    <div class="card c4">
+      <div class="card-icon">🏠</div>
+      <div class="card-label">Visitas Marcadas</div>
+      <div class="card-num" id="n4">0</div>
+      <div class="card-sub" id="s4">meta: 3</div>
+      <div class="prog-wrap"><div class="prog-bar" id="p4" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="btns">
+    <div class="btn-wrap">
+      <div class="btn-label">📞 Feitas</div>
+      <div class="btn-row">
+        <button class="btn b1p" onclick="add(1)">+</button>
+        <button class="btn bm"  onclick="sub(1)">−</button>
+      </div>
+    </div>
+    <div class="btn-wrap">
+      <div class="btn-label">✅ Atendidas</div>
+      <div class="btn-row">
+        <button class="btn b2p" onclick="add(2)">+</button>
+        <button class="btn bm"  onclick="sub(2)">−</button>
+      </div>
+    </div>
+    <div class="btn-wrap">
+      <div class="btn-label">🤝 Retomados</div>
+      <div class="btn-row">
+        <button class="btn b3p" onclick="add(3)">+</button>
+        <button class="btn bm"  onclick="sub(3)">−</button>
+      </div>
+    </div>
+    <div class="btn-wrap">
+      <div class="btn-label">🏠 Visitas</div>
+      <div class="btn-row">
+        <button class="btn b4p" onclick="add(4)">+</button>
+        <button class="btn bm"  onclick="sub(4)">−</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-area">
+    <button class="save-btn" onclick="salvar()">💾 Salvar dia</button>
+    <button class="rel-btn"  onclick="gerarRelatorio()">📋 Claude</button>
+    <button class="reset-btn" onclick="resetar()">↺ Resetar</button>
+  </div>
+
+  <div style="padding:0 20px 8px;">
+    <div class="export-box" id="relatorio-area">
+      <div class="export-label">Cola isso no chat do Claude</div>
+      <div class="export-text" id="relatorio-text"></div>
+      <div class="export-actions">
+        <button class="btn-amber" onclick="copiarRelatorio()">Copiar</button>
+        <button class="btn-ghost" onclick="document.getElementById('relatorio-area').classList.remove('open')">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HISTÓRICO ── -->
+<div class="screen" id="screen-historico">
+  <div class="hist-wrap">
+    <div class="hist-header">
+      <div class="section-label">Histórico de dias</div>
+      <button class="clear-btn" onclick="limparHist()">Limpar tudo</button>
+    </div>
+    <div class="sum-grid">
+      <div class="sum-card"><div class="sum-label">Total feitas</div><div class="sum-num" id="sm1" style="color:var(--blue)">—</div></div>
+      <div class="sum-card"><div class="sum-label">Total atendidas</div><div class="sum-num" id="sm2" style="color:var(--yellow)">—</div></div>
+      <div class="sum-card"><div class="sum-label">Total retomados</div><div class="sum-num" id="sm3" style="color:var(--green)">—</div></div>
+      <div class="sum-card"><div class="sum-label">Total visitas</div><div class="sum-num" id="sm4" style="color:var(--red)">—</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Data</th><th>Feitas</th><th>Atendidas</th><th>Retomados</th><th>Visitas</th><th>% Atend.</th><th>% Retom.</th></tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+    <div class="empty" id="emptyHist">Nenhum dia salvo ainda.</div>
+  </div>
+</div>
+
+<!-- ── CRM ── -->
+<div class="screen" id="screen-crm">
+  <div class="crm-wrap">
+    <div class="crm-header">
+      <div class="section-label">Leads retomados</div>
+      <button class="crm-add-btn" onclick="toggleForm()">+ Adicionar lead</button>
+    </div>
+
+    <div class="crm-form" id="crmForm">
+      <div class="form-grid">
+        <div class="form-field"><label>Nome</label><input type="text" id="fNome" placeholder="Nome do lead"></div>
+        <div class="form-field"><label>Número / WhatsApp</label><input type="text" id="fNum" placeholder="(64) 9xxxx-xxxx"></div>
+        <div class="form-field form-full"><label>O que conversamos</label><textarea id="fConv" placeholder="Região, faixa, objetivo, próximo passo..."></textarea></div>
+        <div class="form-field"><label>Data do contato</label><input type="date" id="fData"></div>
+        <div class="form-field"><label>Status</label>
+          <select id="fStatus">
+            <option value="Atendimento Ativo">Atendimento Ativo</option>
+            <option value="Visita Marcada">Visita Marcada</option>
+            <option value="Proposta">Proposta</option>
+            <option value="Negociação">Negociação</option>
+            <option value="Fechado">Fechado ✅</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-btns">
+        <button class="form-save" onclick="saveLead()">Salvar lead</button>
+        <button class="form-cancel" onclick="cancelForm()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="crm-list" id="crmList"></div>
+    <div class="empty" id="emptyCrm">Nenhum lead registrado ainda.</div>
+  </div>
+</div>
+
+<div class="footer"><div class="footer-status" id="status">Bora ligar! 🔥</div></div>
+<div class="celebration" id="cel" onclick="this.classList.remove('show')">
+  <div class="cel-box"><div class="cel-emoji" id="celE">🎯</div><div class="cel-title" id="celT">META BATIDA!</div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var v=[0,0,0,0], secs=0, running=false, ti=null, editingId=null;
+var d=new Date(), pad=function(n){return String(n).padStart(2,'0');};
+document.getElementById('dataHoje').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+document.getElementById('fData').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+
+function M(i){return parseInt(document.getElementById('m'+i).value)||1;}
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];}}
+function save(k,data){localStorage.setItem(k,JSON.stringify(data));}
+function fmt(s){var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+
+function update(){
+  for(var i=1;i<=4;i++){
+    document.getElementById('n'+i).textContent=v[i-1];
+    document.getElementById('s'+i).textContent='meta: '+M(i);
+    document.getElementById('p'+i).style.width=Math.min((v[i-1]/M(i))*100,100)+'%';
+  }
+  var st='Bora ligar! 🔥';
+  if(v[0]>=M(1)&&v[1]>=M(2)&&v[2]>=M(3)&&v[3]>=M(4)) st='🏆 TODAS AS METAS BATIDAS!';
+  else if(v[0]>=M(1)) st='✅ Calls batidas! Continua!';
+  else if(v[0]>0) st=(M(1)-v[0])+' calls pra meta';
+  document.getElementById('status').textContent=st;
+}
+
+function pulse(id){var el=document.getElementById(id);el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');}
+function celebrate(e,t){document.getElementById('celE').textContent=e;document.getElementById('celT').textContent=t;var c=document.getElementById('cel');c.classList.add('show');setTimeout(function(){c.classList.remove('show');},2000);}
+
+function add(i){
+  if(!running)startStop();
+  v[i-1]++;
+  pulse('n'+i);
+  if(v[i-1]===M(i)){
+    var m=[['🎯','META DE CALLS!'],['✅','META DE ATENDIDAS!'],['🤝','META DE RETOMADOS!'],['🏠','VISITA MARCADA!']];
+    celebrate(m[i-1][0],m[i-1][1]);
+  }
+  update();
+}
+function sub(i){if(v[i-1]>0)v[i-1]--;update();}
+
+function startStop(){
+  if(running){
+    clearInterval(ti);running=false;
+    document.getElementById('timerBtn').textContent='▶ Iniciar';
+    document.getElementById('timerBtn').classList.remove('running');
+  } else {
+    running=true;
+    document.getElementById('timerBtn').textContent='⏸ Pausar';
+    document.getElementById('timerBtn').classList.add('running');
+    ti=setInterval(function(){secs++;document.getElementById('timer').textContent=pad(Math.floor(secs/60))+':'+pad(secs%60);},1000);
+  }
+}
+
+function salvar(){
+  if(!v[0]&&!v[1]&&!v[2]&&!v[3]){toast('Nada para salvar.');return;}
+  var data=document.getElementById('dataHoje').value;
+  var pctA=v[0]>0?Math.round((v[1]/v[0])*100):0;
+  var pctR=v[1]>0?Math.round((v[2]/v[1])*100):0;
+  var r={data:data,v1:v[0],v2:v[1],v3:v[2],v4:v[3],pctA:pctA,pctR:pctR,secs:secs};
+  var h=load('gabriel_calls');
+  var idx=h.findIndex(function(x){return x.data===data;});
+  if(idx>=0)h[idx]=r; else h.unshift(r);
+  save('gabriel_calls',h);
+  toast('Dia '+fmt(data)+' salvo!');
+}
+
+function resetar(){if(!confirm('Resetar placar do dia?'))return;v=[0,0,0,0];secs=0;running=false;clearInterval(ti);document.getElementById('timer').textContent='00:00';document.getElementById('timerBtn').textContent='▶ Iniciar';document.getElementById('timerBtn').classList.remove('running');update();}
+
+function showTab(tab,el){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('screen-'+tab).classList.add('active');
+  el.classList.add('active');
+  if(tab==='historico')renderHist();
+  if(tab==='crm')renderCrm();
+}
+
+function renderHist(){
+  var h=load('gabriel_calls'),body=document.getElementById('histBody'),em=document.getElementById('emptyHist');
+  body.innerHTML='';
+  if(!h.length){em.style.display='block';['sm1','sm2','sm3','sm4'].forEach(function(id){document.getElementById(id).textContent='—';});return;}
+  em.style.display='none';
+  document.getElementById('sm1').textContent=h.reduce(function(a,r){return a+r.v1;},0);
+  document.getElementById('sm2').textContent=h.reduce(function(a,r){return a+r.v2;},0);
+  document.getElementById('sm3').textContent=h.reduce(function(a,r){return a+r.v3;},0);
+  document.getElementById('sm4').textContent=h.reduce(function(a,r){return a+r.v4;},0);
+  h.slice().sort(function(a,b){return b.data.localeCompare(a.data);}).forEach(function(r){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="td-date">'+fmt(r.data)+'</td><td class="td1">'+r.v1+'</td><td class="td2">'+r.v2+'</td><td class="td3">'+r.v3+'</td><td class="td4">'+r.v4+'</td><td style="font-family:Space Mono,monospace;color:var(--muted)">'+r.pctA+'%</td><td style="font-family:Space Mono,monospace;color:var(--muted)">'+r.pctR+'%</td>';
+    body.appendChild(tr);
+  });
+}
+
+function limparHist(){if(!confirm('Apagar todo o histórico?'))return;localStorage.removeItem('gabriel_calls');renderHist();toast('Histórico apagado.');}
+
+// CRM
+function toggleForm(){var f=document.getElementById('crmForm');f.classList.toggle('open');if(!f.classList.contains('open')){editingId=null;clearForm();}}
+function cancelForm(){editingId=null;clearForm();document.getElementById('crmForm').classList.remove('open');}
+function clearForm(){
+  document.getElementById('fNome').value='';
+  document.getElementById('fNum').value='';
+  document.getElementById('fConv').value='';
+  document.getElementById('fStatus').value='Atendimento Ativo';
+  var d2=new Date();
+  document.getElementById('fData').value=d2.getFullYear()+'-'+pad(d2.getMonth()+1)+'-'+pad(d2.getDate());
+}
+
+function saveLead(){
+  var nome=document.getElementById('fNome').value.trim();
+  var num=document.getElementById('fNum').value.trim();
+  var conv=document.getElementById('fConv').value.trim();
+  var data=document.getElementById('fData').value;
+  var status=document.getElementById('fStatus').value;
+  if(!nome){toast('Informe o nome.');return;}
+  var leads=load('gabriel_crm');
+  if(editingId){
+    var idx=leads.findIndex(function(l){return l.id===editingId;});
+    if(idx>=0)leads[idx]={id:editingId,nome:nome,num:num,conv:conv,data:data,status:status};
+    editingId=null;toast('Lead atualizado!');
+  } else {
+    leads.unshift({id:Date.now().toString(),nome:nome,num:num,conv:conv,data:data,status:status});
+    toast('Lead salvo!');
+  }
+  save('gabriel_crm',leads);clearForm();document.getElementById('crmForm').classList.remove('open');renderCrm();
+}
+
+function editLead(id){
+  var leads=load('gabriel_crm');
+  var l=leads.find(function(x){return x.id===id;});
+  if(!l)return;
+  editingId=id;
+  document.getElementById('fNome').value=l.nome||'';
+  document.getElementById('fNum').value=l.num||'';
+  document.getElementById('fConv').value=l.conv||'';
+  document.getElementById('fData').value=l.data||'';
+  document.getElementById('fStatus').value=l.status||'Atendimento Ativo';
+  document.getElementById('crmForm').classList.add('open');
+  document.getElementById('crmForm').scrollIntoView({behavior:'smooth'});
+}
+
+function renderCrm(){
+  var leads=load('gabriel_crm'),list=document.getElementById('crmList'),em=document.getElementById('emptyCrm');
+  list.innerHTML='';
+  if(!leads.length){em.style.display='block';return;}
+  em.style.display='none';
+  leads.forEach(function(l){
+    var card=document.createElement('div');card.className='crm-card';
+    card.innerHTML=
+      '<div class="crm-card-header" onclick="toggleCard(\'c'+l.id+'\')">'+
+        '<div><div class="crm-card-name">'+l.nome+'</div><div class="crm-card-num">'+l.num+'</div></div>'+
+        '<div style="display:flex;gap:10px;align-items:center;">'+
+          '<span class="crm-badge">'+l.status+'</span>'+
+          '<div class="crm-card-date">'+fmt(l.data)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="crm-card-body" id="c'+l.id+'">'+
+        '<div class="crm-field-label">O que conversamos</div>'+
+        '<div class="crm-field-val">'+(l.conv||'—')+'</div>'+
+        '<div class="crm-card-actions">'+
+          '<button class="crm-edit-btn" onclick="editLead(\''+l.id+'\')">✏️ Editar</button>'+
+          '<button class="crm-del-btn" onclick="deleteLead(\''+l.id+'\')">Remover</button>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(id){var el=document.getElementById(id);if(el)el.classList.toggle('open');}
+function deleteLead(id){if(!confirm('Remover lead?'))return;var leads=load('gabriel_crm').filter(function(l){return l.id!==id;});save('gabriel_crm',leads);renderCrm();toast('Lead removido.');}
+
+// RELATÓRIO PARA O CLAUDE
+function gerarRelatorio(){
+  var data=document.getElementById('dataHoje').value;
+  var pctA=v[0]>0?Math.round((v[1]/v[0])*100):0;
+  var pctR=v[1]>0?Math.round((v[2]/v[1])*100):0;
+  var h=load('gabriel_calls');
+  var totais={v1:h.reduce(function(a,r){return a+r.v1;},0),v2:h.reduce(function(a,r){return a+r.v2;},0),v3:h.reduce(function(a,r){return a+r.v3;},0),v4:h.reduce(function(a,r){return a+r.v4;},0)};
+  var leads=load('gabriel_crm');
+  var linhaLeads=leads.length>0?leads.slice(0,5).map(function(l){return '  '+l.nome+' ('+l.status+')';}).join('\n'):'  (nenhum)';
+  var mins=Math.floor(secs/60),secsR=secs%60;
+  var texto=
+'📞 RELATÓRIO CALLS — '+fmt(data)+'\n\n'+
+'HOJE:\n'+
+'  📞 Feitas:    '+v[0]+' / '+M(1)+' (meta)\n'+
+'  ✅ Atendidas: '+v[1]+' ('+pctA+'% de conversão)\n'+
+'  🤝 Retomados: '+v[2]+' ('+pctR+'% das atendidas)\n'+
+'  🏠 Visitas:   '+v[3]+'\n'+
+'  ⏱ Tempo:      '+pad(mins)+'min '+pad(secsR)+'s\n\n'+
+'ACUMULADO GERAL:\n'+
+'  📞 Total feitas:    '+totais.v1+'\n'+
+'  ✅ Total atendidas: '+totais.v2+'\n'+
+'  🤝 Total retomados: '+totais.v3+'\n'+
+'  🏠 Total visitas:   '+totais.v4+'\n\n'+
+'LEADS RECENTES NO CRM:\n'+linhaLeads;
+  document.getElementById('relatorio-text').textContent=texto;
+  document.getElementById('relatorio-area').classList.add('open');
+  document.getElementById('relatorio-area').scrollIntoView({behavior:'smooth'});
+}
+
+function copiarRelatorio(){
+  var texto=document.getElementById('relatorio-text').textContent;
+  navigator.clipboard.writeText(texto).then(function(){
+    var btn=document.querySelector('#relatorio-area .btn-amber');
+    btn.textContent='Copiado!';
+    setTimeout(function(){btn.textContent='Copiar';},2000);
+  });
+}
+
+update();
+</script>
+</body>
+</html>
