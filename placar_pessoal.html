@@ -10,15 +10,15 @@
     --black:      #080A0F;
     --panel:      #0D1117;
     --border:     #1C2333;
-    --amber:      #E8A020;
+    --amber:      #FFB627;
     --amber-dim:  #7A4F08;
-    --green:      #2ECC71;
+    --green:      #22E88A;
     --green-dim:  #0F4A2A;
-    --red:        #D94F3D;
+    --red:        #FF5A42;
     --red-dim:    #5A1A10;
-    --cyan:       #1DCDCD;
+    --cyan:       #00E5E5;
     --cyan-dim:   #0A4A4A;
-    --violet:     #9B6DFF;
+    --violet:     #B37CFF;
     --violet-dim: #3A1F88;
     --muted:      #5A6478;
     --white:      #E8EDF3;
@@ -220,13 +220,11 @@ const ITENS = [
   { id:'malhacao', nome:'Malhação',    icon:'🏋', cor:'green',  cls:''},
   { id:'jiu',      nome:'Jiu-Jitsu',   icon:'🥋', cor:'green',  cls:''},
   { id:'judo',     nome:'Judô',         icon:'🎽', cor:'green',  cls:''},
-  { id:'estudo',   nome:'Estudo',       icon:'🧠', cor:'violet', cls:'violet-item'},
-  { id:'ligacoes', nome:'Ligações',     icon:'📞', cor:'amber',  cls:'amber-item', numero:true},
+  { id:'estudo',   nome:'Estudo',       icon:'🧠', cor:'violet', cls:'violet-item', numero:true, meta:90, unidade:'min'},
+  { id:'ligacoes', nome:'Ligações',     icon:'📞', cor:'amber',  cls:'amber-item', numero:true, meta:50, unidade:''},
   { id:'game',     nome:'Game Social',  icon:'🎮', cor:'cyan',   cls:'cyan-item'},
-  { id:'gravacao', nome:'Gravação',     icon:'🎬', cor:'cyan',   cls:'cyan-item'},
+  { id:'gravacao', nome:'Gravação',     icon:'🎬', cor:'cyan',   cls:'cyan-item', numero:true, meta:7, unidade:'vídeos'},
 ];
-
-const META_LIG = 50;
 
 // ── STATE ──────────────────────────────────────────────────────
 let state = { dias: {} }; // {YYYY-MM-DD: {malhacao:bool, jiu:bool, estudo:bool, ligacoes:N, game:bool, gravacao:bool}}
@@ -264,7 +262,7 @@ function scoresDia(data) {
   const dia = state.dias[data] || {};
   let feitos = 0;
   ITENS.forEach(item => {
-    if (item.numero) { if ((dia[item.id]||0) >= META_LIG) feitos++; }
+    if (item.numero) { if ((dia[item.id]||0) >= item.meta) feitos++; }
     else { if (dia[item.id]) feitos++; }
   });
   return feitos;
@@ -300,7 +298,7 @@ function renderHoje() {
   grid.innerHTML = '';
 
   ITENS.forEach(item => {
-    const done = item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    const done = item.numero ? (dia[item.id]||0) >= item.meta : !!dia[item.id];
     const card = document.createElement('div');
     card.className = `item-card ${item.cls} ${done ? 'done' : ''}`;
 
@@ -310,9 +308,9 @@ function renderHoje() {
       metaHtml = `
         <div class="lig-input-wrap" onclick="event.stopPropagation()">
           <input class="lig-input" type="number" min="0" max="999" value="${val}"
-            onchange="setLigacoes(this.value)"
-            oninput="setLigacoes(this.value)">
-          <span class="lig-label">/ ${META_LIG} meta</span>
+            onchange="setNumero('${item.id}', this.value)"
+            oninput="setNumero('${item.id}', this.value)">
+          <span class="lig-label">meta: ${item.meta}${item.unidade ? ' '+item.unidade : ''}</span>
         </div>`;
     } else {
       metaHtml = `<div class="item-meta">${done ? 'Concluído hoje ✓' : 'Toca para marcar'}</div>`;
@@ -344,11 +342,11 @@ function toggleItem(id) {
   renderHoje();
 }
 
-function setLigacoes(val) {
+function setNumero(id, val) {
   const hoje = hojeStr();
   if (!state.dias[hoje]) state.dias[hoje] = {};
   const n = parseInt(val) || 0;
-  state.dias[hoje].ligacoes = n;
+  state.dias[hoje][id] = n;
   salvar();
   atualizarScore();
 }
@@ -364,7 +362,7 @@ function atualizarScore() {
   cards.forEach((card, i) => {
     const item = ITENS[i];
     const dia = state.dias[hoje] || {};
-    const done = item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+    const done = item.numero ? (dia[item.id]||0) >= item.meta : !!dia[item.id];
     card.classList.toggle('done', done);
     const check = card.querySelector('.item-check');
     if (check) check.textContent = done ? '✓' : '';
@@ -423,11 +421,11 @@ function renderSemana() {
 
   // breakdown por item
   const breakdown = document.getElementById('breakdown-semana');
-  const cores = {malhacao:'#2ECC71',jiu:'#2ECC71',estudo:'#9B6DFF',ligacoes:'#E8A020',game:'#1DCDCD',gravacao:'#1DCDCD'};
+  const cores = {malhacao:'#22E88A',jiu:'#22E88A',estudo:'#B37CFF',ligacoes:'#FFB627',game:'#00E5E5',gravacao:'#00E5E5'};
   breakdown.innerHTML = ITENS.map(item => {
     const feitos = dias.filter(d => {
       const dia = state.dias[d] || {};
-      return item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+      return item.numero ? (dia[item.id]||0) >= item.meta : !!dia[item.id];
     }).length;
     const diasPassados = dias.filter(d => d <= hoje).length;
     const pct = diasPassados > 0 ? Math.round(feitos/diasPassados*100) : 0;
@@ -490,11 +488,11 @@ function renderEvolucao() {
   }).join('');
 
   // breakdown geral
-  const cores = {malhacao:'#2ECC71',jiu:'#2ECC71',estudo:'#9B6DFF',ligacoes:'#E8A020',game:'#1DCDCD',gravacao:'#1DCDCD'};
+  const cores = {malhacao:'#22E88A',jiu:'#22E88A',estudo:'#B37CFF',ligacoes:'#FFB627',game:'#00E5E5',gravacao:'#00E5E5'};
   document.getElementById('breakdown-geral').innerHTML = ITENS.map(item => {
     const feitos = todasDatas.filter(d => {
       const dia = state.dias[d] || {};
-      return item.numero ? (dia[item.id]||0) >= META_LIG : !!dia[item.id];
+      return item.numero ? (dia[item.id]||0) >= item.meta : !!dia[item.id];
     }).length;
     const pct = totalDias > 0 ? Math.round(feitos/totalDias*100) : 0;
     return `<div class="bk-row">
@@ -542,7 +540,8 @@ function gerarRelatorio() {
   const linhaItens = ITENS.map(item => {
     if (item.numero) {
       const n = dia[item.id] || 0;
-      return `${item.icon} ${item.nome}: ${n} ligações ${n >= META_LIG ? '✅' : '❌'} (meta: ${META_LIG})`;
+      const suf = item.unidade ? ' '+item.unidade : '';
+      return `${item.icon} ${item.nome}: ${n}${suf} ${n >= item.meta ? '✅' : '❌'} (meta: ${item.meta}${suf})`;
     }
     return `${item.icon} ${item.nome}: ${dia[item.id] ? '✅' : '❌'}`;
   }).join('\n');
@@ -551,7 +550,7 @@ function gerarRelatorio() {
   const linhaSemana = ITENS.map(item => {
     const feitos = diasSemana.filter(d => {
       const dd = state.dias[d] || {};
-      return item.numero ? (dd[item.id]||0) >= META_LIG : !!dd[item.id];
+      return item.numero ? (dd[item.id]||0) >= item.meta : !!dd[item.id];
     }).length;
     return `  ${item.icon} ${item.nome}: ${feitos}/${diasSemana.length}`;
   }).join('\n');
